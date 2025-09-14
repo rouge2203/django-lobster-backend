@@ -42,6 +42,7 @@ def submit_application(request):
         admin_emails = [
             'aruiz@lobsterlabs.net',
             'jrodriguez@futbolconsultants.com'
+            'info@fcprosoccertryouts.com'
         ]
         
         admin_email_sent = False
