@@ -41,7 +41,7 @@ def submit_application(request):
         # Send admin notification email
         admin_emails = [
             'aruiz@lobsterlabs.net',
-            'jrodriguez@futbolconsultants.com'
+            'jrodriguez@futbolconsultants.com',
             'info@fcprosoccertryouts.com'
         ]
         
