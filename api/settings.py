@@ -137,7 +137,7 @@ EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = 'Jose Luis Rodriguez <info@fcprosoccertryouts.com>'
+DEFAULT_FROM_EMAIL = 'FC Pro Soccer Tryouts <info@fcprosoccertryouts.com>'
 
 # Explicitly set these to None to avoid SSL certificate issues
 EMAIL_SSL_KEYFILE = None
