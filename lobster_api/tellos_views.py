@@ -1,9 +1,82 @@
 from django.http import HttpResponse, JsonResponse
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import send_mail, EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
+from django.conf import settings
 from rest_framework.decorators import api_view
 from datetime import datetime
 import json
+
+# Admin email for notifications
+ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+
+
+def get_tellos_connection():
+    """Create and return a connection using tellos email settings."""
+    return get_connection(
+        backend=settings.TELLOS_EMAIL_BACKEND,
+        host=settings.TELLOS_EMAIL_HOST,
+        port=settings.TELLOS_EMAIL_PORT,
+        username=settings.TELLOS_EMAIL_HOST_USER,
+        password=settings.TELLOS_EMAIL_HOST_PASSWORD,
+        use_tls=settings.TELLOS_EMAIL_USE_TLS,
+        use_ssl=settings.TELLOS_EMAIL_USE_SSL,
+    )
+
+
+def send_admin_notification(context, connection=None):
+    """
+    Send admin notification email about new reservation.
+    Uses the same context as the user confirmation email.
+    Optionally accepts an existing connection to reuse.
+    """
+    try:
+        # Use provided connection or create a new one
+        tellos_connection = connection if connection else get_tellos_connection()
+        
+        # Build subject with cancha and hora
+        subject = f"Nueva Reserva: {context['cancha_nombre']}, {context['hora']}"
+        
+        # Render HTML email template
+        html_content = render_to_string('email_templates/tellos/admin_reservation_notification.html', context)
+        
+        # Create plain text fallback
+        text_content = f"""Nueva Reservación Recibida
+
+Cliente: {context['nombre_reserva']}
+Teléfono: {context['celular_reserva']}
+Correo: {context['correo_reserva']}
+
+Cancha: {context['cancha_nombre']}
+Local: {context['local_nombre']}
+Fecha: {context['fecha']} — {context['hora']}
+Jugadores: {context['jugadores']}
+Árbitro: {context['arbitro']}
+Total: ₡{context['precio_total']}
+
+Ver reservación: {context['reserva_url']}
+ID de reservación: {context['reserva_id']}
+"""
+        
+        # Create email message using tellos connection
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.TELLOS_DEFAULT_FROM_EMAIL,
+            to=[ADMIN_EMAIL],
+            connection=tellos_connection
+        )
+        
+        # Attach HTML content
+        msg.attach_alternative(html_content, "text/html")
+        
+        # Send email
+        msg.send()
+        print(f"Admin notification email sent successfully to: {ADMIN_EMAIL}")
+        return True
+    except Exception as e:
+        print(f"Error sending admin notification email: {str(e)}")
+        return False
+
 
 @api_view(['POST'])
 def confirm_reservation(request):
@@ -85,6 +158,8 @@ def confirm_reservation(request):
         # Prepare template context
         context = {
             'nombre_reserva': nombre_reserva,
+            'celular_reserva': celular_reserva,
+            'correo_reserva': correo_reserva,
             'cancha_nombre': cancha_nombre,
             'local_nombre': local_nombre,
             'local_id': cancha_local,
@@ -99,9 +174,17 @@ def confirm_reservation(request):
         
         subject = f"Futbol Tello: Reservación confirmada"
         
-        # Send confirmation email
+        # Send confirmation email to user and admin using same connection
         email_sent = False
+        admin_email_sent = False
+        
+        # Create a single connection and reuse for both emails (faster)
+        tellos_connection = get_tellos_connection()
+        
         try:
+            # Open connection once for both emails
+            tellos_connection.open()
+            
             # Render HTML email template
             html_content = render_to_string('email_templates/tellos/reservation_confirmation.html', context)
             
@@ -129,30 +212,39 @@ Si no lo haces, tu reserva podría cancelarse automáticamente.
             text_content += f"\nVer detalles de mi reserva: {reserva_url}\n\n"
             text_content += f"ID de reserva: {reserva_id}"
             
-            # Create email message
+            # Create email message using tellos connection
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=text_content,
-                from_email='info@fcprosoccertryouts.com',
-                to=[correo_reserva]
+                from_email=settings.TELLOS_DEFAULT_FROM_EMAIL,
+                to=[correo_reserva],
+                connection=tellos_connection
             )
             
             # Attach HTML content
             msg.attach_alternative(html_content, "text/html")
             
-            # Send email
+            # Send user email
             msg.send()
             email_sent = True
             print(f"Reservation confirmation email sent successfully to: {correo_reserva}")
+            
+            # Send admin notification email using the same connection
+            admin_email_sent = send_admin_notification(context, connection=tellos_connection)
+            
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             email_sent = False
+        finally:
+            # Always close the connection
+            tellos_connection.close()
         
         # Return success response
         return JsonResponse({
             'success': True,
             'message': 'Reservation confirmed successfully',
             'email_sent': email_sent,
+            'admin_email_sent': admin_email_sent,
             'reserva_id': reserva_id,
             'nombre_reserva': nombre_reserva
         })
@@ -162,4 +254,61 @@ Si no lo haces, tu reserva podría cancelarse automáticamente.
     except Exception as e:
         print(f"Error processing reservation: {str(e)}")
         return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+@api_view(['POST'])
+def send_test_email(request):
+    """
+    Send a test email using the Tellos email configuration.
+    Expects a JSON body with 'email' field.
+    """
+    try:
+        # Parse JSON data from request body
+        if hasattr(request, 'data'):
+            data = request.data
+        else:
+            data = json.loads(request.body.decode('utf-8'))
+        
+        # Validate email parameter
+        if 'email' not in data:
+            return JsonResponse({
+                'error': 'Missing required field: email'
+            }, status=400)
+        
+        recipient_email = data['email']
+        
+        # Create a connection using tellos email settings
+        tellos_connection = get_tellos_connection()
+        
+        # Prepare email content
+        subject = 'Hello from Tellos'
+        message = 'Hello from Tellos! This is a test email.'
+        from_email = settings.TELLOS_DEFAULT_FROM_EMAIL
+        
+        # Create and send email message using tellos connection
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=message,
+            from_email=from_email,
+            to=[recipient_email],
+            connection=tellos_connection
+        )
+        
+        # Send the email
+        email.send()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Test email sent successfully to {recipient_email}',
+            'from_email': from_email
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        print(f"Error sending test email: {str(e)}")
+        return JsonResponse({
+            'error': 'Failed to send email',
+            'details': str(e)
+        }, status=500)
 

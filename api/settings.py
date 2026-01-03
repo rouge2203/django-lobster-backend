@@ -129,7 +129,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email configuration - use environment variables for security
+# Email configuration - DEFAULT (FC Pro Soccer Tryouts)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtpout.secureserver.net'
 EMAIL_PORT = 465
@@ -142,6 +142,20 @@ DEFAULT_FROM_EMAIL = 'FC Pro Soccer Tryouts <info@fcprosoccertryouts.com>'
 # Explicitly set these to None to avoid SSL certificate issues
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
+
+# Email configuration - TELLOS (uses same provider)
+TELLOS_EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+TELLOS_EMAIL_HOST = 'smtpout.secureserver.net'
+TELLOS_EMAIL_PORT = 465
+TELLOS_EMAIL_USE_TLS = False
+TELLOS_EMAIL_USE_SSL = True
+TELLOS_EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+TELLOS_EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+TELLOS_DEFAULT_FROM_EMAIL = 'Reservaciones Futbol Tello <info@futboltello.com>'
+
+# Tellos SSL settings
+TELLOS_EMAIL_SSL_KEYFILE = None
+TELLOS_EMAIL_SSL_CERTFILE = None
 
 # CORS settings for API access
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development/testing

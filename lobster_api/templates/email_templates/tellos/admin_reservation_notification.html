@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reservación confirmada - Futbol Tello</title>
+    <title>Nueva Reservación - Futbol Tello</title>
   </head>
   <body
     style="
@@ -48,17 +48,6 @@
                 <table cellpadding="0" cellspacing="0" style="margin: 0 auto">
                   <tr>
                     <td style="text-align: center">
-                      <!-- <img
-                        src="{{ logo_url }}"
-                        alt="Futbol Tello"
-                        style="
-                          height: 32px;
-                          width: auto;
-                          display: inline-block;
-                          vertical-align: middle;
-                          margin-right: 8px;
-                        "
-                      /> -->
                       <h1
                         style="
                           margin: 0;
@@ -72,6 +61,17 @@
                       >
                         FUTBOL TELLO
                       </h1>
+                      <p
+                        style="
+                          margin: 8px 0 0 0;
+                          color: rgba(255, 255, 255, 0.5);
+                          font-size: 12px;
+                          text-transform: uppercase;
+                          letter-spacing: 1px;
+                        "
+                      >
+                        Panel de Administración
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -81,6 +81,29 @@
             <!-- Main Content -->
             <tr>
               <td style="padding: 32px 24px">
+                <!-- Alert Badge -->
+                <div
+                  style="
+                    background: rgba(26, 92, 58, 0.15);
+                    border: 1px solid rgba(26, 92, 58, 0.4);
+                    border-radius: 8px;
+                    padding: 12px 16px;
+                    margin-bottom: 24px;
+                    text-align: center;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      color: #000000;
+                      font-size: 14px;
+                      font-weight: 600;
+                    "
+                  >
+                    🔔 Nueva reservación recibida
+                  </p>
+                </div>
+
                 <h2
                   style="
                     margin: 0 0 12px 0;
@@ -89,7 +112,7 @@
                     font-weight: 700;
                   "
                 >
-                  ¡Reservación confirmada!
+                  Nueva Reservación
                 </h2>
                 <p
                   style="
@@ -99,10 +122,103 @@
                     line-height: 1.5;
                   "
                 >
-                  Hola
-                  <strong style="color: #ffffff">{{ nombre_reserva }}</strong>,
-                  su reservación ya está registrada.
+                  Se ha registrado una nueva reservación en el sistema.
                 </p>
+
+                <!-- Client Info Card -->
+                <div
+                  style="
+                    background: rgba(26, 92, 58, 0.08);
+                    border: 1px solid rgba(26, 92, 58, 0.25);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0 0 16px 0;
+                      color: #3d8b5a;
+                      font-size: 14px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      letter-spacing: 0.5px;
+                    "
+                  >
+                    👤 Datos del Cliente
+                  </h3>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom: 12px">
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                          "
+                        >
+                          Nombre
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ nombre_reserva }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 12px">
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                          "
+                        >
+                          Teléfono
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ celular_reserva }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                          "
+                        >
+                          Correo
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ correo_reserva }}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
 
                 <!-- Reservation Details Card -->
                 <div
@@ -114,16 +230,26 @@
                     margin-bottom: 20px;
                   "
                 >
+                  <h3
+                    style="
+                      margin: 0 0 16px 0;
+                      color: rgba(255, 255, 255, 0.6);
+                      font-size: 14px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      letter-spacing: 0.5px;
+                    "
+                  >
+                    ⚽ Detalles de la Reservación
+                  </h3>
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="padding-bottom: 12px">
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
                           Cancha
@@ -150,11 +276,9 @@
                       >
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
                           Local
@@ -181,14 +305,12 @@
                       >
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
-                          Fecha
+                          Fecha y Hora
                         </p>
                         <p
                           style="
@@ -212,11 +334,9 @@
                       >
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
                           Jugadores
@@ -243,11 +363,9 @@
                       >
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
                           Árbitro
@@ -273,11 +391,9 @@
                       >
                         <p
                           style="
-                            margin: 0 0 8px 0;
+                            margin: 0 0 4px 0;
                             color: rgba(255, 255, 255, 0.6);
                             font-size: 12px;
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
                           "
                         >
                           Total
@@ -285,7 +401,7 @@
                         <p
                           style="
                             margin: 0;
-                            color: #ffffff;
+                            color: #3d8b5a;
                             font-size: 24px;
                             font-weight: 700;
                           "
@@ -297,7 +413,7 @@
                   </table>
                 </div>
 
-                <!-- SABANA Warning Block -->
+                <!-- Payment Status -->
                 {% if local_id == 1 %}
                 <div
                   style="
@@ -310,45 +426,30 @@
                 >
                   <p
                     style="
-                      margin: 0 0 8px 0;
+                      margin: 0;
                       color: #eab308;
                       font-size: 14px;
                       font-weight: 600;
                     "
                   >
-                    ⚠️ Importante
+                    ⏳ Pendiente de pago SINPE
                   </p>
                   <p
                     style="
-                      margin: 0 0 8px 0;
-                      color: rgba(255, 255, 255, 0.9);
-                      font-size: 14px;
-                      line-height: 1.5;
+                      margin: 8px 0 0 0;
+                      color: rgba(255, 255, 255, 0.7);
+                      font-size: 13px;
                     "
                   >
-                    <strong style="color: #eab308">2 horas</strong> para
-                    realizar el SINPE y subir el comprobante.
-                  </p>
-                  <p
-                    style="
-                      margin: 0 0 8px 0;
-                      color: rgba(255, 255, 255, 0.8);
-                      font-size: 14px;
-                      line-height: 1.5;
-                    "
-                  >
-                    Si no lo hace, su reservación podría ser cancelada
-                    automáticamente.
+                    El cliente tiene 2 horas para realizar el SINPE y subir el
+                    comprobante.
                   </p>
                 </div>
-                {% endif %}
-
-                <!-- GUADALUPE Info Block -->
-                {% if local_id == 2 %}
+                {% endif %} {% if local_id == 2 %}
                 <div
                   style="
-                    background: rgba(19, 50, 43, 0.3);
-                    border: 1px solid rgba(19, 50, 43, 0.5);
+                    background: rgba(19, 50, 43, 0.2);
+                    border: 1px solid rgba(26, 92, 58, 0.3);
                     border-radius: 12px;
                     padding: 16px;
                     margin-bottom: 20px;
@@ -357,17 +458,26 @@
                   <p
                     style="
                       margin: 0;
-                      color: rgba(255, 255, 255, 0.9);
+                      color: #3d8b5a;
                       font-size: 14px;
+                      font-weight: 600;
                     "
                   >
-                    💵 <strong style="color: #cafb45">Pago:</strong> se realiza
-                    directamente en la cancha.
+                    💵 Pago en cancha
+                  </p>
+                  <p
+                    style="
+                      margin: 8px 0 0 0;
+                      color: rgba(255, 255, 255, 0.7);
+                      font-size: 13px;
+                    "
+                  >
+                    El cliente pagará directamente en la cancha.
                   </p>
                 </div>
                 {% endif %}
 
-                <!-- CTA Button -->
+                <!-- View Reservation Button -->
                 <table
                   width="100%"
                   cellpadding="0"
@@ -387,81 +497,14 @@
                           padding: 18px 36px;
                           border-radius: 8px;
                           font-weight: 800;
-                          font-size: 18px;
+                          font-size: 16px;
                         "
                       >
-                        Ver reservación
+                        Ver reservación completa
                       </a>
                     </td>
                   </tr>
                 </table>
-
-                <!-- Cancellation Section -->
-                <div
-                  style="
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
-                    padding: 20px;
-                    margin-bottom: 20px;
-                  "
-                >
-                  <h3
-                    style="
-                      margin: 0 0 16px 0;
-                      color: #ffffff;
-                      font-size: 16px;
-                      font-weight: 600;
-                    "
-                  >
-                    ¿Desea cancelar esta reservación?
-                  </h3>
-                  <table
-                    width="100%"
-                    cellpadding="0"
-                    cellspacing="0"
-                    style="margin-bottom: 12px"
-                  >
-                    <tr>
-                      <td align="center">
-                        <a
-                          href="https://wa.me/50688888888?text=Hola,%20quisiera%20cancelar%20mi%20reserva%20:"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style="
-                            display: block;
-                            background: rgba(255, 255, 255, 0.05);
-                            border: 1px solid rgba(255, 255, 255, 0.1);
-                            color: #ffffff;
-                            text-decoration: none;
-                            padding: 12px 24px;
-                            border-radius: 8px;
-                            font-weight: 600;
-                            font-size: 14px;
-                            text-align: center;
-                          "
-                        >
-                          <span style="font-size: 18px; margin-right: 8px"
-                            >💬</span
-                          >
-                          Enviar mensaje por WhatsApp
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p
-                    style="
-                      margin: 0;
-                      color: rgba(255, 255, 255, 0.5);
-                      font-size: 12px;
-                      text-align: center;
-                      line-height: 1.4;
-                    "
-                  >
-                    Comuníquese con nosotros para solicitar la cancelación de su
-                    reservación
-                  </p>
-                </div>
 
                 <!-- Footer -->
                 <p
