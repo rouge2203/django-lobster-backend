@@ -7,7 +7,7 @@ from datetime import datetime
 import json
 
 # Admin email for notifications
-ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+ADMIN_EMAIL = 'agendakathia1974@gmail.com'
 
 
 def get_tellos_connection():
