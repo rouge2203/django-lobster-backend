@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recordatorio: Tu reserva es mañana - Futbol Tello</title>
+    <title>Recordatorio: Su reserva es mañana - Futbol Tello</title>
   </head>
   <body
     style="
@@ -89,7 +89,7 @@
                       font-weight: 700;
                     "
                   >
-                    ⏰ ¡Tu reserva es mañana!
+                    ⏰ ¡Su reserva es mañana!
                   </p>
                 </div>
 
@@ -113,7 +113,7 @@
                 >
                   Hola
                   <strong style="color: #ffffff">{{ nombre_reserva }}</strong>,
-                  te recordamos que tienes una reservación programada para mañana.
+                  le recordamos que tiene una reservación programada para mañana.
                 </p>
 
                 <!-- Reservation Details Card -->
@@ -309,6 +309,67 @@
                   </table>
                 </div>
 
+                <!-- SABANA SINPE Warning - Only show if sinpe_reserva is null -->
+                {% if local_id == 1 and not sinpe_reserva %}
+                <div
+                  style="
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.4);
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0 0 8px 0;
+                      color: #ef4444;
+                      font-size: 16px;
+                      font-weight: 700;
+                    "
+                  >
+                    ⚠️ IMPORTANTE - Pago Pendiente
+                  </p>
+                  <p
+                    style="
+                      margin: 0;
+                      color: rgba(255, 255, 255, 0.9);
+                      font-size: 14px;
+                      line-height: 1.5;
+                    "
+                  >
+                    No hemos recibido su comprobante de SINPE. Si no realiza el pago y sube el comprobante, 
+                    <strong style="color: #ef4444">su reservación podría ser cancelada</strong>.
+                  </p>
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="margin-top: 12px"
+                  >
+                    <tr>
+                      <td align="center">
+                        <a
+                          href="{{ reserva_url }}"
+                          style="
+                            display: inline-block;
+                            background: #ef4444;
+                            color: #ffffff;
+                            text-decoration: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-weight: 700;
+                            font-size: 14px;
+                          "
+                        >
+                          Subir comprobante SINPE
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                {% endif %}
+
                 <!-- GUADALUPE Payment Reminder -->
                 {% if local_id == 2 %}
                 <div
@@ -480,7 +541,7 @@
               text-align: center;
             "
           >
-            Software creado por
+            Powered by
             <a
               href="https://lobsterlabs.net"
               style="

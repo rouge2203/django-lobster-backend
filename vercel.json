@@ -18,6 +18,10 @@
     {
       "path": "/api/tasks/send-24h-reminders",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/tasks/send-daily-schedule",
+      "schedule": "0 12 * * *"
     }
   ]
 }

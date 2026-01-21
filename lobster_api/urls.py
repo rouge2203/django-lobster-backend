@@ -13,4 +13,5 @@ urlpatterns = [
     path('tellos/notify-new-reto', tellos_views.notify_new_reto, name='notify_new_reto'),
     # Cron tasks
     path('tasks/send-24h-reminders', tasks.send_24h_reminders, name='send_24h_reminders'),
+    path('tasks/send-daily-schedule', tasks.send_daily_schedule, name='send_daily_schedule'),
 ]
