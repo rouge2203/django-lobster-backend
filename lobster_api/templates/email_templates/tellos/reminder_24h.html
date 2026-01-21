@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recordatorio: Tu reserva es mañana - Futbol Tello</title>
+  </head>
+  <body
+    style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      color: #ffffff;
+      background: #101113;
+      padding: 0;
+      margin: 0;
+    "
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background: #101113; padding: 24px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 640px;
+              margin: 0 auto;
+              background: #1a1a1d;
+              border-radius: 16px;
+              overflow: hidden;
+            "
+          >
+            <!-- Header with Logo and Branding -->
+            <tr>
+              <td
+                style="
+                  background: #101113;
+                  padding: 24px;
+                  text-align: center;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                "
+              >
+                <table cellpadding="0" cellspacing="0" style="margin: 0 auto">
+                  <tr>
+                    <td style="text-align: center">
+                      <h1
+                        style="
+                          margin: 0;
+                          color: #ffffff;
+                          font-size: 20px;
+                          font-weight: 800;
+                          letter-spacing: -0.5px;
+                          display: inline-block;
+                          vertical-align: middle;
+                        "
+                      >
+                        FUTBOL TELLO
+                      </h1>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Main Content -->
+            <tr>
+              <td style="padding: 32px 24px">
+                <!-- Reminder Alert -->
+                <div
+                  style="
+                    background: rgba(202, 251, 69, 0.1);
+                    border: 1px solid rgba(202, 251, 69, 0.3);
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 24px;
+                    text-align: center;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      color: #cafb45;
+                      font-size: 18px;
+                      font-weight: 700;
+                    "
+                  >
+                    ⏰ ¡Tu reserva es mañana!
+                  </p>
+                </div>
+
+                <h2
+                  style="
+                    margin: 0 0 12px 0;
+                    color: #ffffff;
+                    font-size: 24px;
+                    font-weight: 700;
+                  "
+                >
+                  Recordatorio de reservación
+                </h2>
+                <p
+                  style="
+                    margin: 0 0 24px 0;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-size: 16px;
+                    line-height: 1.5;
+                  "
+                >
+                  Hola
+                  <strong style="color: #ffffff">{{ nombre_reserva }}</strong>,
+                  te recordamos que tienes una reservación programada para mañana.
+                </p>
+
+                <!-- Reservation Details Card -->
+                <div
+                  style="
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom: 12px">
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Cancha
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ cancha_nombre }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding-bottom: 12px;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                          padding-top: 12px;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Local
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ local_nombre }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding-bottom: 12px;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                          padding-top: 12px;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Fecha
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ fecha }} — {{ hora }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding-bottom: 12px;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                          padding-top: 12px;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Jugadores
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ jugadores }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding-bottom: 12px;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                          padding-top: 12px;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Árbitro
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 600;
+                          "
+                        >
+                          {{ arbitro }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                          padding-top: 12px;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 8px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                          "
+                        >
+                          Total
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ffffff;
+                            font-size: 24px;
+                            font-weight: 700;
+                          "
+                        >
+                          ₡{{ precio_total }}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- GUADALUPE Payment Reminder -->
+                {% if local_id == 2 %}
+                <div
+                  style="
+                    background: rgba(19, 50, 43, 0.3);
+                    border: 1px solid rgba(19, 50, 43, 0.5);
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      color: rgba(255, 255, 255, 0.9);
+                      font-size: 14px;
+                    "
+                  >
+                    💵 <strong style="color: #cafb45">Recordatorio:</strong> El pago se realiza
+                    directamente en la cancha.
+                  </p>
+                </div>
+                {% endif %}
+
+                <!-- CTA Button -->
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="margin-bottom: 20px"
+                >
+                  <tr>
+                    <td align="center">
+                      <a
+                        href="{{ reserva_url }}"
+                        style="
+                          display: inline-block;
+                          background: #2a2a2d;
+                          border: 1px solid #3a3a3d;
+                          color: #ffffff;
+                          text-decoration: none;
+                          padding: 18px 36px;
+                          border-radius: 8px;
+                          font-weight: 800;
+                          font-size: 18px;
+                        "
+                      >
+                        Ver reservación
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Cancellation Section -->
+                <div
+                  style="
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0 0 16px 0;
+                      color: #ffffff;
+                      font-size: 16px;
+                      font-weight: 600;
+                    "
+                  >
+                    ¿Necesita cancelar?
+                  </h3>
+                  <table
+                    width="100%"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="margin-bottom: 12px"
+                  >
+                    <tr>
+                      <td align="center">
+                        <a
+                          href="https://wa.me/50688888888?text=Hola,%20quisiera%20cancelar%20mi%20reserva%20:"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style="
+                            display: block;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            color: #ffffff;
+                            text-decoration: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            font-size: 14px;
+                            text-align: center;
+                          "
+                        >
+                          <span style="font-size: 18px; margin-right: 8px"
+                            >💬</span
+                          >
+                          Enviar mensaje por WhatsApp
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p
+                    style="
+                      margin: 0;
+                      color: rgba(255, 255, 255, 0.5);
+                      font-size: 12px;
+                      text-align: center;
+                      line-height: 1.4;
+                    "
+                  >
+                    Comuníquese con nosotros lo antes posible si necesita cancelar
+                  </p>
+                </div>
+
+                <!-- Footer -->
+                <p
+                  style="
+                    margin: 0;
+                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 12px;
+                    text-align: center;
+                  "
+                >
+                  ID de reservación:
+                  <span
+                    style="
+                      color: rgba(255, 255, 255, 0.7);
+                      font-family: monospace;
+                    "
+                    >{{ reserva_id }}</span
+                  >
+                </p>
+              </td>
+            </tr>
+
+            <!-- Bottom Border -->
+            <tr>
+              <td
+                style="
+                  background: #101113;
+                  height: 1px;
+                  border-top: 1px solid rgba(255, 255, 255, 0.1);
+                "
+              ></td>
+            </tr>
+          </table>
+
+          <!-- Email Footer -->
+          <p
+            style="
+              margin: 24px 0 0 0;
+              color: rgba(255, 255, 255, 0.4);
+              font-size: 12px;
+              text-align: center;
+            "
+          >
+            © Futbol Tello. Todos los derechos reservados.
+          </p>
+          <p
+            style="
+              margin: 8px 0 0 0;
+              color: rgba(255, 255, 255, 0.4);
+              font-size: 12px;
+              text-align: center;
+            "
+          >
+            Software creado por
+            <a
+              href="https://lobsterlabs.net"
+              style="
+                color: rgba(255, 255, 255, 0.6);
+                text-decoration: none;
+                font-weight: bold;
+              "
+              >Lobster Labs</a
+            >
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

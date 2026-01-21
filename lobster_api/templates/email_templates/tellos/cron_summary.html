@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resumen de Recordatorios - Futbol Tello</title>
+  </head>
+  <body
+    style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      color: #ffffff;
+      background: #101113;
+      padding: 0;
+      margin: 0;
+    "
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background: #101113; padding: 24px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 640px;
+              margin: 0 auto;
+              background: #1a1a1d;
+              border-radius: 16px;
+              overflow: hidden;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                style="
+                  background: #101113;
+                  padding: 24px;
+                  text-align: center;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                "
+              >
+                <h1
+                  style="
+                    margin: 0;
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-weight: 800;
+                    letter-spacing: -0.5px;
+                  "
+                >
+                  FUTBOL TELLO - CRON REPORT
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Main Content -->
+            <tr>
+              <td style="padding: 32px 24px">
+                <h2
+                  style="
+                    margin: 0 0 12px 0;
+                    color: #ffffff;
+                    font-size: 24px;
+                    font-weight: 700;
+                  "
+                >
+                  Resumen de Recordatorios 24h
+                </h2>
+                <p
+                  style="
+                    margin: 0 0 24px 0;
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 14px;
+                  "
+                >
+                  Ejecutado: {{ execution_time }}
+                </p>
+
+                <!-- Summary Stats -->
+                <div
+                  style="
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom: 12px">
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                          "
+                        >
+                          Emails Enviados
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #cafb45;
+                            font-size: 32px;
+                            font-weight: 700;
+                          "
+                        >
+                          {{ emails_sent }}
+                        </p>
+                      </td>
+                      <td style="padding-bottom: 12px">
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                            text-transform: uppercase;
+                          "
+                        >
+                          Errores
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: {% if emails_failed > 0 %}#ef4444{% else %}rgba(255, 255, 255, 0.5){% endif %};
+                            font-size: 32px;
+                            font-weight: 700;
+                          "
+                        >
+                          {{ emails_failed }}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Success List -->
+                {% if success_list %}
+                <div
+                  style="
+                    background: rgba(202, 251, 69, 0.05);
+                    border: 1px solid rgba(202, 251, 69, 0.2);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0 0 16px 0;
+                      color: #cafb45;
+                      font-size: 14px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Enviados Correctamente
+                  </h3>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    {% for item in success_list %}
+                    <tr>
+                      <td
+                        style="
+                          padding: 12px 0;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: #ffffff;
+                            font-size: 14px;
+                            font-weight: 600;
+                          "
+                        >
+                          Reserva #{{ item.reserva_id }} - {{ item.nombre }}
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                          "
+                        >
+                          {{ item.email }} | {{ item.cancha }} | {{ item.fecha }} {{ item.hora }}
+                        </p>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </div>
+                {% endif %}
+
+                <!-- Failure List -->
+                {% if failure_list %}
+                <div
+                  style="
+                    background: rgba(239, 68, 68, 0.05);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0 0 16px 0;
+                      color: #ef4444;
+                      font-size: 14px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Errores
+                  </h3>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    {% for item in failure_list %}
+                    <tr>
+                      <td
+                        style="
+                          padding: 12px 0;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: #ffffff;
+                            font-size: 14px;
+                            font-weight: 600;
+                          "
+                        >
+                          Reserva #{{ item.reserva_id }} - {{ item.nombre }}
+                        </p>
+                        <p
+                          style="
+                            margin: 0 0 4px 0;
+                            color: rgba(255, 255, 255, 0.6);
+                            font-size: 12px;
+                          "
+                        >
+                          {{ item.email }}
+                        </p>
+                        <p
+                          style="
+                            margin: 0;
+                            color: #ef4444;
+                            font-size: 12px;
+                            font-family: monospace;
+                          "
+                        >
+                          Error: {{ item.error }}
+                        </p>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+
+            <!-- Bottom Border -->
+            <tr>
+              <td
+                style="
+                  background: #101113;
+                  height: 1px;
+                  border-top: 1px solid rgba(255, 255, 255, 0.1);
+                "
+              ></td>
+            </tr>
+          </table>
+
+          <!-- Email Footer -->
+          <p
+            style="
+              margin: 24px 0 0 0;
+              color: rgba(255, 255, 255, 0.4);
+              font-size: 12px;
+              text-align: center;
+            "
+          >
+            Este es un correo automático del sistema de cron jobs.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

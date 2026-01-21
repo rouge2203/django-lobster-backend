@@ -166,3 +166,13 @@ CORS_ALLOW_CREDENTIALS = True
 #     "https://yourdomain.com",
 #     "https://www.yourdomain.com",
 # ]
+
+# Supabase configuration
+# SUPABASE_URL: Your project URL (e.g., https://xxxxx.supabase.co)
+# SUPABASE_KEY: Use sb_secret_... key (new system) or service_role key (legacy)
+#               Found in: Supabase Dashboard > Settings > API > Secret keys
+SUPABASE_URL = env('SUPABASE_URL')
+SUPABASE_KEY = env('SUPABASE_KEY')
+
+# Cron job security
+CRON_SECRET = env('CRON_SECRET', default='')
