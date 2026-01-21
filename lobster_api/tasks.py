@@ -148,7 +148,7 @@ Local: {context['local_nombre']}
 Fecha: {context['fecha']} — {context['hora']}
 Jugadores: {context['jugadores']}
 Árbitro: {context['arbitro']}
-Total: ₡{context['precio_total']}
+Total: {context['precio_total']} CRC
 """
         
         # Add SINPE warning for Sabana if payment not received
@@ -500,7 +500,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
             nombre = res.get('nombre_reserva', 'N/A')
             celular = res.get('celular_reserva', 'N/A') or 'N/A'
             arbitro = 'Sí' if res.get('arbitro', False) else 'No'
-            precio = f"₡{res.get('precio', 0):,}".replace(',', '.')
+            precio = f"{res.get('precio', 0):,} CRC".replace(',', '.')
             confirmada = 'Sí' if res.get('confirmada', False) else 'No'
             
             table_data.append([hora, nombre, celular, arbitro, precio, confirmada])
@@ -586,7 +586,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
         alignment=TA_CENTER,
         fontName='Helvetica-Bold'
     )))
-    elements.append(Paragraph("www.lobsterlabs.net", footer_style))
+    elements.append(Paragraph("lobsterlabs.net", footer_style))
     
     # Build PDF
     doc.build(elements)
@@ -660,7 +660,7 @@ Se adjunta el PDF con el detalle completo de las reservaciones por cancha.
 
 ---
 Powered by LOBSTER LABS
-www.lobsterlabs.net
+lobsterlabs.net
 """
         
         html_content = f"""
@@ -699,7 +699,7 @@ www.lobsterlabs.net
         <tr>
             <td style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
                 <p style="margin: 0 0 4px 0; color: #666; font-size: 12px; font-weight: 600;">Powered by LOBSTER LABS</p>
-                <p style="margin: 0; color: #999; font-size: 11px;">www.lobsterlabs.net</p>
+                <p style="margin: 0; color: #999; font-size: 11px;">lobsterlabs.net</p>
             </td>
         </tr>
     </table>
