@@ -7,8 +7,12 @@ from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.decorators import api_view
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from .supabase_client import get_supabase_client
+
+# Costa Rica timezone (UTC-6, no daylight saving)
+COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 
 # Admin email for cron summaries
 ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
@@ -229,23 +233,26 @@ def send_24h_reminders(request):
         # Get Supabase client
         supabase = get_supabase_client()
         
-        # Calculate time window for 24 hours from now
-        # We use a 2-hour window (23h to 25h) to ensure we don't miss any
-        # with the 5-minute cron interval
-        now = datetime.now()
-        window_start = now + timedelta(hours=23)
-        window_end = now + timedelta(hours=25)
+        # Calculate time window: from NOW to 24 hours from now
+        # hora_inicio is stored in Costa Rica time (UTC-6), so we use that timezone
+        now_utc = datetime.now(timezone.utc)
+        now_cr = now_utc.astimezone(COSTA_RICA_TZ)
         
-        # Format for Supabase query
+        # Window: from now until 24 hours from now (Costa Rica time)
+        window_start = now_cr
+        window_end = now_cr + timedelta(hours=24)
+        
+        # Format for Supabase query (without timezone info, matching hora_inicio format)
         window_start_str = window_start.strftime('%Y-%m-%d %H:%M:%S')
         window_end_str = window_end.strftime('%Y-%m-%d %H:%M:%S')
         
+        print(f"Current time (Costa Rica): {now_cr.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Checking for reservations between {window_start_str} and {window_end_str}")
         
         # Query reservations that need reminders
-        # - recordatorio_24h_enviado is NULL
-        # - correo_reserva is NOT NULL
-        # - hora_inicio is between 23-25 hours from now
+        # - recordatorio_24h_enviado is NULL (no reminder sent yet)
+        # - correo_reserva is NOT NULL (has email to send to)
+        # - hora_inicio is between now and 24 hours from now
         response = supabase.table('reservas').select('*').is_('recordatorio_24h_enviado', 'null').not_.is_('correo_reserva', 'null').gte('hora_inicio', window_start_str).lte('hora_inicio', window_end_str).execute()
         
         reservations = response.data
@@ -310,12 +317,13 @@ def send_24h_reminders(request):
                         'hora': context['hora']
                     })
                     
-                    # Update recordatorio_24h_enviado with current timestamp
-                    timestamp = datetime.now().isoformat()
+                    # Update recordatorio_24h_enviado with current timestamp (Costa Rica time)
+                    timestamp_cr = datetime.now(timezone.utc).astimezone(COSTA_RICA_TZ)
+                    timestamp_str = timestamp_cr.strftime('%Y-%m-%d %H:%M:%S')
                     supabase.table('reservas').update({
-                        'recordatorio_24h_enviado': timestamp
+                        'recordatorio_24h_enviado': timestamp_str
                     }).eq('id', reserva['id']).execute()
-                    print(f"Updated recordatorio_24h_enviado for reserva {reserva['id']}")
+                    print(f"Updated recordatorio_24h_enviado for reserva {reserva['id']} at {timestamp_str}")
                     
                 else:
                     emails_failed += 1
