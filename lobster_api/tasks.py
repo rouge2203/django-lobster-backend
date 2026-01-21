@@ -24,7 +24,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 
 # Admin email for cron summaries
-ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+# ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+ADMIN_EMAIL = 'Agendakathia74@gmail.com'
 
 # Spanish day names
 DIAS_ESPANOL = {
@@ -231,7 +232,8 @@ Errores: {emails_failed}
             subject=subject,
             body=text_content,
             from_email=settings.TELLOS_DEFAULT_FROM_EMAIL,
-            to=[ADMIN_EMAIL],
+            # to=[ADMIN_EMAIL],
+            to=['aruiz@lobsterlabs.net'],
             connection=connection
         )
         
@@ -240,7 +242,7 @@ Errores: {emails_failed}
         
         # Send email
         msg.send()
-        print(f"Summary email sent to: {ADMIN_EMAIL}")
+        print(f"Summary email sent to: aruiz@lobsterlabs.net")
         return True
         
     except Exception as e:
