@@ -25,7 +25,7 @@
     },
     {
       "path": "/api/tasks/generate-recurring-reservations",
-      "schedule": "0 * * * *"
+      "schedule": "0 6 * * *"
     }
   ]
 }
