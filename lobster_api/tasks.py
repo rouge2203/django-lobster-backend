@@ -831,8 +831,6 @@ def generate_recurring_reservations(request):
             hora_inicio_time = fija['hora_inicio']  # Time part only (e.g., "14:00:00")
             hora_fin_time = fija['hora_fin']
             
-            print(f"[Recurring Reservations] Processing reserva_fija #{fija_id} - dia={dia}")
-            
             # Generate dates for the next 8 weeks
             for week_offset in range(8):
                 # Calculate the target date
@@ -888,15 +886,23 @@ def generate_recurring_reservations(request):
                         'precio': precio,
                         'cancha_id': cancha_id
                     })
-                    print(f"[Recurring Reservations] Created reserva for {dia_nombre} {hora_inicio_full} from reserva_fija of {nombre_reserva} - Precio: {precio} CRC, Cancha ID: {cancha_id}")
         
-        print(f"[Recurring Reservations] Finished. Total created: {total_created}")
+        # Print summary at the end
+        print(f"\n{'='*80}")
+        print(f"[Recurring Reservations] SUMMARY")
+        print(f"{'='*80}")
+        print(f"Total reservas_fijas processed: {len(reservas_fijas)}")
+        print(f"Total reservations created: {total_created}")
         
-        # Log summary of created reservations
         if created_details:
-            print("[Recurring Reservations] Summary of created reservations:")
+            print(f"\nCreated Reservations List:")
+            print(f"{'-'*80}")
             for detail in created_details:
-                print(f"  - {detail['dia']} {detail['fecha']} {detail['hora']} | {detail['nombre']} | {detail['precio']} CRC | Cancha {detail['cancha_id']}")
+                print(f"  {detail['dia']:10} {detail['fecha']} {detail['hora']:8} | {detail['nombre']:30} | {detail['precio']:>6} CRC | Cancha {detail['cancha_id']}")
+            print(f"{'-'*80}")
+        else:
+            print("\nNo new reservations created (all already exist)")
+        print(f"{'='*80}\n")
         
         return JsonResponse({
             'success': True,
