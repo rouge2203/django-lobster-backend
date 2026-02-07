@@ -14,4 +14,5 @@ urlpatterns = [
     # Cron tasks
     path('tasks/send-24h-reminders', tasks.send_24h_reminders, name='send_24h_reminders'),
     path('tasks/send-daily-schedule', tasks.send_daily_schedule, name='send_daily_schedule'),
+    path('tasks/generate-recurring-reservations', tasks.generate_recurring_reservations, name='generate_recurring_reservations'),
 ]

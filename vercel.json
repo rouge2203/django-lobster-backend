@@ -22,6 +22,10 @@
     {
       "path": "/api/tasks/send-daily-schedule",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/tasks/generate-recurring-reservations",
+      "schedule": "0 * * * *"
     }
   ]
 }
