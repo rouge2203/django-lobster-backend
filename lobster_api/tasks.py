@@ -24,8 +24,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 
 # Admin email for cron summaries
-# ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
-ADMIN_EMAIL = 'Agendakathia74@gmail.com'
+ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+# ADMIN_EMAIL = 'Agendakathia74@gmail.com'
 
 # Spanish day names
 DIAS_ESPANOL = {
@@ -393,11 +393,13 @@ def send_24h_reminders(request):
         }, status=500)
 
 
-def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
+def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha, pagos_by_reserva=None):
     """
     Generate a PDF with the daily schedule for all canchas.
     Returns a BytesIO buffer containing the PDF.
     """
+    if pagos_by_reserva is None:
+        pagos_by_reserva = {}
     buffer = BytesIO()
     
     # Create document in landscape mode for better calendar view
@@ -483,7 +485,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
         reservations.sort(key=lambda x: x['hora_inicio'])
         
         # Create table data
-        table_data = [['Hora', 'Cliente', 'Teléfono', 'Árbitro', 'Precio', 'Confirmada']]
+        table_data = [['Hora', 'Cliente', 'Teléfono', 'Árbitro', 'Precio', 'Confirmada', 'Pagos']]
         
         for res in reservations:
             # Parse time
@@ -504,11 +506,13 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
             arbitro = 'Sí' if res.get('arbitro', False) else 'No'
             precio = f"{res.get('precio', 0):,} CRC".replace(',', '.')
             confirmada = 'Sí' if res.get('confirmada', False) else 'No'
+            num_pagos = len(pagos_by_reserva.get(res['id'], []))
+            pagos_str = str(num_pagos)
             
-            table_data.append([hora, nombre, celular, arbitro, precio, confirmada])
+            table_data.append([hora, nombre, celular, arbitro, precio, confirmada, pagos_str])
         
         # Create table
-        col_widths = [1.5*inch, 2.5*inch, 1.3*inch, 0.8*inch, 1*inch, 1*inch]
+        col_widths = [1.5*inch, 2.2*inch, 1.2*inch, 0.7*inch, 0.9*inch, 0.9*inch, 0.6*inch]
         table = Table(table_data, colWidths=col_widths)
         
         # Table styling
@@ -526,7 +530,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha):
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 1), (-1, -1), 9),
             ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('ALIGN', (3, 1), (5, -1), 'CENTER'),  # Center arbitro, precio, confirmada
+            ('ALIGN', (3, 1), (6, -1), 'CENTER'),
             ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
             ('TOPPADDING', (0, 1), (-1, -1), 6),
             
@@ -634,6 +638,18 @@ def send_daily_schedule(request):
         reservations = reservations_response.data
         print(f"Found {len(reservations)} reservations for today")
         
+        # Fetch pagos for today's reservations
+        pagos_by_reserva = {}
+        if reservations:
+            reserva_ids = [res['id'] for res in reservations]
+            pagos_response = supabase.table('pagos').select('*').in_('reserva_id', reserva_ids).execute()
+            for pago in pagos_response.data:
+                rid = pago['reserva_id']
+                if rid not in pagos_by_reserva:
+                    pagos_by_reserva[rid] = []
+                pagos_by_reserva[rid].append(pago)
+            print(f"Found {len(pagos_response.data)} pagos for today's reservations")
+        
         # Group reservations by cancha_id
         reservations_by_cancha = {}
         for res in reservations:
@@ -643,7 +659,7 @@ def send_daily_schedule(request):
             reservations_by_cancha[cancha_id].append(res)
         
         # Generate PDF
-        pdf_buffer = generate_daily_schedule_pdf(now_cr, canchas, reservations_by_cancha)
+        pdf_buffer = generate_daily_schedule_pdf(now_cr, canchas, reservations_by_cancha, pagos_by_reserva)
         
         # Prepare email
         dia_semana = DIAS_ESPANOL[now_cr.weekday()]
