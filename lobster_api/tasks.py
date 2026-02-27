@@ -485,7 +485,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha, pagos_
         reservations.sort(key=lambda x: x['hora_inicio'])
         
         # Create table data
-        table_data = [['Hora', 'Cliente', 'Teléfono', 'Árbitro', 'Precio', 'Confirmada', 'Pagos']]
+        table_data = [['Hora', 'Cliente', 'Teléfono', 'Árbitro', 'Precio', 'Adelanto', 'Pendiente']]
         
         for res in reservations:
             # Parse time
@@ -504,15 +504,24 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha, pagos_
             nombre = res.get('nombre_reserva', 'N/A')
             celular = res.get('celular_reserva', 'N/A') or 'N/A'
             arbitro = 'Sí' if res.get('arbitro', False) else 'No'
-            precio = f"{res.get('precio', 0):,} CRC".replace(',', '.')
-            confirmada = 'Sí' if res.get('confirmada', False) else 'No'
-            num_pagos = len(pagos_by_reserva.get(res['id'], []))
-            pagos_str = str(num_pagos)
+            precio_val = res.get('precio', 0) or 0
+            precio = f"{precio_val:,} CRC".replace(',', '.')
             
-            table_data.append([hora, nombre, celular, arbitro, precio, confirmada, pagos_str])
+            # Sum pagos (monto_sinpe + monto_efectivo for each pago)
+            pagos_list = pagos_by_reserva.get(res['id'], [])
+            adelanto_val = sum(
+                (p.get('monto_sinpe', 0) or 0) + (p.get('monto_efectivo', 0) or 0)
+                for p in pagos_list
+            )
+            pendiente_val = precio_val - adelanto_val
+            
+            adelanto = f"{adelanto_val:,} CRC".replace(',', '.') if adelanto_val > 0 else '0'
+            pendiente = f"{pendiente_val:,} CRC".replace(',', '.') if pendiente_val > 0 else '0'
+            
+            table_data.append([hora, nombre, celular, arbitro, precio, adelanto, pendiente])
         
         # Create table
-        col_widths = [1.5*inch, 2.2*inch, 1.2*inch, 0.7*inch, 0.9*inch, 0.9*inch, 0.6*inch]
+        col_widths = [1.5*inch, 2.2*inch, 1.1*inch, 0.7*inch, 0.9*inch, 0.9*inch, 0.9*inch]
         table = Table(table_data, colWidths=col_widths)
         
         # Table styling
