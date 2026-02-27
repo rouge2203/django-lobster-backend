@@ -24,8 +24,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 
 # Admin email for cron summaries
-ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
-# ADMIN_EMAIL = 'Agendakathia74@gmail.com'
+# ADMIN_EMAIL = 'aruiz@lobsterlabs.net'
+ADMIN_EMAIL = 'Agendakathia74@gmail.com'
 
 # Spanish day names
 DIAS_ESPANOL = {
