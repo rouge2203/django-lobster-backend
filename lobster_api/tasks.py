@@ -775,134 +775,296 @@ lobsterlabs.net
         }, status=500)
 
 
+# def get_next_occurrence(base_date, target_dia):
+#     """
+#     Get the next occurrence of a specific day of the week from base_date.
+    
+#     target_dia uses the convention:
+#     0 = Domingo (Sunday)
+#     1 = Lunes (Monday)
+#     2 = Martes (Tuesday)
+#     3 = Miércoles (Wednesday)
+#     4 = Jueves (Thursday)
+#     5 = Viernes (Friday)
+#     6 = Sábado (Saturday)
+    
+#     Python's weekday() uses: 0=Monday, 6=Sunday
+#     """
+#     # Convert target_dia to Python weekday format
+#     # target_dia: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+#     # python:     6=Sun, 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat
+#     if target_dia == 0:  # Sunday
+#         python_weekday = 6
+#     else:
+#         python_weekday = target_dia - 1
+    
+#     current_weekday = base_date.weekday()
+#     days_ahead = python_weekday - current_weekday
+    
+#     if days_ahead < 0:  # Target day already passed this week
+#         days_ahead += 7
+    
+#     return base_date + timedelta(days=days_ahead)
+
+
+# @api_view(['GET'])
+# def generate_recurring_reservations(request):
+#     """
+#     Cron task: Generate reservations from reservas_fijas for the next 8 weeks.
+#     Called by Vercel cron every hour.
+    
+#     For each reserva_fija, ensures reservations exist in the reservas table
+#     for the next 8 weeks with reservacion_fija_id set.
+#     """
+#     # Verify cron secret
+#     auth_header = request.headers.get('Authorization', '')
+#     expected_secret = f"Bearer {settings.CRON_SECRET}"
+    
+#     if settings.CRON_SECRET and auth_header != expected_secret:
+#         return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+#     try:
+#         # Get current date in Costa Rica
+#         now_utc = datetime.now(timezone.utc)
+#         now_cr = now_utc.astimezone(COSTA_RICA_TZ)
+#         today_cr = now_cr.date()
+        
+#         print(f"[Recurring Reservations] Starting generation for next 8 weeks from {today_cr}")
+        
+#         # Get Supabase client
+#         supabase = get_supabase_client()
+        
+#         # Fetch all reservas_fijas
+#         fijas_response = supabase.table('reservas_fijas').select('*').execute()
+#         reservas_fijas = fijas_response.data
+#         print(f"[Recurring Reservations] Found {len(reservas_fijas)} reservas_fijas")
+        
+#         if not reservas_fijas:
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': 'No reservas_fijas found',
+#                 'reservas_created': 0
+#             })
+        
+#         # Track created reservations
+#         total_created = 0
+#         created_details = []
+        
+#         for fija in reservas_fijas:
+#             fija_id = fija['id']
+#             dia = fija['dia']
+#             hora_inicio_time = fija['hora_inicio']  # Time part only (e.g., "14:00:00")
+#             hora_fin_time = fija['hora_fin']
+            
+#             # Generate dates for the next 8 weeks
+#             for week_offset in range(8):
+#                 # Calculate the target date
+#                 base_date = today_cr + timedelta(weeks=week_offset)
+#                 target_date = get_next_occurrence(base_date, dia)
+                
+#                 # Skip if the target date is in the past
+#                 if target_date < today_cr:
+#                     continue
+                
+#                 # Build full datetime strings
+#                 hora_inicio_full = f"{target_date.strftime('%Y-%m-%d')} {hora_inicio_time}"
+#                 hora_fin_full = f"{target_date.strftime('%Y-%m-%d')} {hora_fin_time}"
+                
+#                 # Check if reservation already exists for this date and reserva_fija
+#                 existing = supabase.table('reservas').select('id').eq('reservacion_fija_id', fija_id).eq('hora_inicio', hora_inicio_full).execute()
+                
+#                 if existing.data:
+#                     # Reservation already exists, skip
+#                     continue
+                
+#                 # Create the reservation
+#                 nombre_reserva = fija.get('nombre_reserva_fija', '')
+#                 precio = fija.get('precio', 0)
+#                 cancha_id = fija['cancha_id']
+                
+#                 new_reserva = {
+#                     'hora_inicio': hora_inicio_full,
+#                     'hora_fin': hora_fin_full,
+#                     'nombre_reserva': nombre_reserva,
+#                     'celular_reserva': fija.get('celular_reserva_fija'),
+#                     'correo_reserva': fija.get('correo_reserva_fija'),
+#                     'precio': precio,
+#                     'arbitro': fija.get('arbitro', False),
+#                     'cancha_id': cancha_id,
+#                     'reservacion_fija_id': fija_id,
+#                     'confirmada': False,  # Needs confirmation
+#                 }
+                
+#                 result = supabase.table('reservas').insert(new_reserva).execute()
+                
+#                 if result.data:
+#                     created_id = result.data[0]['id']
+#                     total_created += 1
+#                     dia_nombre = DIAS_ESPANOL[target_date.weekday()]
+#                     created_details.append({
+#                         'reserva_id': created_id,
+#                         'fija_id': fija_id,
+#                         'nombre': nombre_reserva,
+#                         'fecha': target_date.strftime('%Y-%m-%d'),
+#                         'dia': dia_nombre,
+#                         'hora': hora_inicio_time,
+#                         'precio': precio,
+#                         'cancha_id': cancha_id
+#                     })
+        
+#         # Print summary at the end
+#         print(f"\n{'='*80}")
+#         print(f"[Recurring Reservations] SUMMARY")
+#         print(f"{'='*80}")
+#         print(f"Total reservas_fijas processed: {len(reservas_fijas)}")
+#         print(f"Total reservations created: {total_created}")
+        
+#         if created_details:
+#             print(f"\nCreated Reservations List:")
+#             print(f"{'-'*80}")
+#             for detail in created_details:
+#                 print(f"  {detail['dia']:10} {detail['fecha']} {detail['hora']:8} | {detail['nombre']:30} | {detail['precio']:>6} CRC | Cancha {detail['cancha_id']}")
+#             print(f"{'-'*80}")
+#         else:
+#             print("\nNo new reservations created (all already exist)")
+#         print(f"{'='*80}\n")
+        
+#         return JsonResponse({
+#             'success': True,
+#             'message': f'Generated {total_created} reservations from {len(reservas_fijas)} reservas_fijas',
+#             'reservas_created': total_created,
+#             'details': created_details
+#         })
+        
+#     except Exception as e:
+#         print(f"[Recurring Reservations] Error: {str(e)}")
+#         return JsonResponse({
+#             'error': 'Internal server error',
+#             'details': str(e)
+#         }, status=500)
+
+
 def get_next_occurrence(base_date, target_dia):
     """
     Get the next occurrence of a specific day of the week from base_date.
     
-    target_dia uses the convention:
-    0 = Domingo (Sunday)
-    1 = Lunes (Monday)
-    2 = Martes (Tuesday)
-    3 = Miércoles (Wednesday)
-    4 = Jueves (Thursday)
-    5 = Viernes (Friday)
-    6 = Sábado (Saturday)
-    
+    target_dia uses the DB convention: 1=Lunes, 2=Martes, ..., 7=Domingo
     Python's weekday() uses: 0=Monday, 6=Sunday
     """
-    # Convert target_dia to Python weekday format
-    # target_dia: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    # python:     6=Sun, 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat
-    if target_dia == 0:  # Sunday
+    if target_dia == 0:  # Sunday (legacy)
+        python_weekday = 6
+    elif target_dia == 7:  # Sunday (DB convention)
         python_weekday = 6
     else:
         python_weekday = target_dia - 1
-    
+
     current_weekday = base_date.weekday()
     days_ahead = python_weekday - current_weekday
-    
-    if days_ahead < 0:  # Target day already passed this week
+
+    if days_ahead < 0:
         days_ahead += 7
-    
+
     return base_date + timedelta(days=days_ahead)
 
 
 @api_view(['GET'])
 def generate_recurring_reservations(request):
     """
-    Cron task: Generate reservations from reservas_fijas for the next 8 weeks.
+    Cron task: Extend reservas_fijas window to the 8th week ahead.
     Called by Vercel cron every hour.
     
-    For each reserva_fija, ensures reservations exist in the reservas table
-    for the next 8 weeks with reservacion_fija_id set.
+    Only creates the reservation for the 8th week out.
+    Does NOT backfill deleted or missing reservas in weeks 1-7.
+    Handles DB constraint violations (unique + linked canchas) gracefully.
     """
-    # Verify cron secret
     auth_header = request.headers.get('Authorization', '')
     expected_secret = f"Bearer {settings.CRON_SECRET}"
-    
+
     if settings.CRON_SECRET and auth_header != expected_secret:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     try:
-        # Get current date in Costa Rica
         now_utc = datetime.now(timezone.utc)
         now_cr = now_utc.astimezone(COSTA_RICA_TZ)
         today_cr = now_cr.date()
-        
-        print(f"[Recurring Reservations] Starting generation for next 8 weeks from {today_cr}")
-        
-        # Get Supabase client
+
+        print(f"[Recurring Reservations] Extending window to 8th week from {today_cr}")
+
         supabase = get_supabase_client()
-        
-        # Fetch all reservas_fijas
+
         fijas_response = supabase.table('reservas_fijas').select('*').execute()
         reservas_fijas = fijas_response.data
         print(f"[Recurring Reservations] Found {len(reservas_fijas)} reservas_fijas")
-        
+
         if not reservas_fijas:
             return JsonResponse({
                 'success': True,
                 'message': 'No reservas_fijas found',
                 'reservas_created': 0
             })
-        
-        # Track created reservations
+
         total_created = 0
+        total_skipped_existing = 0
+        total_skipped_conflict = 0
         created_details = []
-        
+        skipped_details = []
+
         for fija in reservas_fijas:
             fija_id = fija['id']
             dia = fija['dia']
-            hora_inicio_time = fija['hora_inicio']  # Time part only (e.g., "14:00:00")
+            hora_inicio_time = fija['hora_inicio']
             hora_fin_time = fija['hora_fin']
-            
-            # Generate dates for the next 8 weeks
-            for week_offset in range(8):
-                # Calculate the target date
-                base_date = today_cr + timedelta(weeks=week_offset)
-                target_date = get_next_occurrence(base_date, dia)
-                
-                # Skip if the target date is in the past
-                if target_date < today_cr:
-                    continue
-                
-                # Build full datetime strings
-                hora_inicio_full = f"{target_date.strftime('%Y-%m-%d')} {hora_inicio_time}"
-                hora_fin_full = f"{target_date.strftime('%Y-%m-%d')} {hora_fin_time}"
-                
-                # Check if reservation already exists for this date and reserva_fija
-                existing = supabase.table('reservas').select('id').eq('reservacion_fija_id', fija_id).eq('hora_inicio', hora_inicio_full).execute()
-                
-                if existing.data:
-                    # Reservation already exists, skip
-                    continue
-                
-                # Create the reservation
-                nombre_reserva = fija.get('nombre_reserva_fija', '')
-                precio = fija.get('precio', 0)
-                cancha_id = fija['cancha_id']
-                
-                new_reserva = {
-                    'hora_inicio': hora_inicio_full,
-                    'hora_fin': hora_fin_full,
-                    'nombre_reserva': nombre_reserva,
-                    'celular_reserva': fija.get('celular_reserva_fija'),
-                    'correo_reserva': fija.get('correo_reserva_fija'),
-                    'precio': precio,
-                    'arbitro': fija.get('arbitro', False),
-                    'cancha_id': cancha_id,
-                    'reservacion_fija_id': fija_id,
-                    'confirmada': False,  # Needs confirmation
-                }
-                
+            cancha_id = fija['cancha_id']
+            nombre_reserva = fija.get('nombre_reserva_fija', '')
+            precio = fija.get('precio', 0)
+
+            print(f"\n  [Fija {fija_id}] '{nombre_reserva}' | dia={dia} | cancha={cancha_id} | {hora_inicio_time} - {hora_fin_time}")
+
+            # Only target the 8th week out
+            base_date = today_cr + timedelta(weeks=7)
+            target_date = get_next_occurrence(base_date, dia)
+
+            hora_inicio_full = f"{target_date.strftime('%Y-%m-%d')} {hora_inicio_time}"
+            hora_fin_full = f"{target_date.strftime('%Y-%m-%d')} {hora_fin_time}"
+
+            print(f"  [Fija {fija_id}] Target date → {target_date} ({DIAS_ESPANOL[target_date.weekday()]})")
+
+            # Check if this fija already has a reserva for this date
+            existing = supabase.table('reservas').select('id') \
+                .eq('reservacion_fija_id', fija_id) \
+                .eq('hora_inicio', hora_inicio_full) \
+                .execute()
+
+            if existing.data:
+                total_skipped_existing += 1
+                print(f"  [Fija {fija_id}] SKIP — reserva already exists (id={existing.data[0]['id']})")
+                continue
+
+            print(f"  [Fija {fija_id}] Inserting reserva for {hora_inicio_full} ...")
+
+            new_reserva = {
+                'hora_inicio': hora_inicio_full,
+                'hora_fin': hora_fin_full,
+                'nombre_reserva': nombre_reserva,
+                'celular_reserva': fija.get('celular_reserva_fija'),
+                'correo_reserva': fija.get('correo_reserva_fija'),
+                'precio': precio,
+                'arbitro': fija.get('arbitro', False),
+                'cancha_id': cancha_id,
+                'reservacion_fija_id': fija_id,
+                'confirmada': False,
+            }
+
+            try:
                 result = supabase.table('reservas').insert(new_reserva).execute()
-                
+
                 if result.data:
-                    created_id = result.data[0]['id']
                     total_created += 1
                     dia_nombre = DIAS_ESPANOL[target_date.weekday()]
+                    new_id = result.data[0]['id']
+                    print(f"  [Fija {fija_id}] OK — created reserva id={new_id}")
                     created_details.append({
-                        'reserva_id': created_id,
+                        'reserva_id': new_id,
                         'fija_id': fija_id,
                         'nombre': nombre_reserva,
                         'fecha': target_date.strftime('%Y-%m-%d'),
@@ -911,31 +1073,62 @@ def generate_recurring_reservations(request):
                         'precio': precio,
                         'cancha_id': cancha_id
                     })
-        
-        # Print summary at the end
+
+            except Exception as insert_error:
+                error_msg = str(insert_error)
+                dia_nombre = DIAS_ESPANOL[target_date.weekday()]
+
+                if '23505' in error_msg:
+                    # Unique constraint or linked canchas trigger violation
+                    total_skipped_conflict += 1
+                    skipped_details.append({
+                        'fija_id': fija_id,
+                        'nombre': nombre_reserva,
+                        'fecha': target_date.strftime('%Y-%m-%d'),
+                        'dia': dia_nombre,
+                        'hora': hora_inicio_time,
+                        'cancha_id': cancha_id,
+                        'reason': 'Cancha ya reservada en esa hora'
+                    })
+                    print(f"  [Fija {fija_id}] CONFLICT — slot already taken ({target_date} {hora_inicio_time} cancha={cancha_id})")
+                else:
+                    print(f"  [Fija {fija_id}] ERROR — {error_msg}")
+
+        # Summary
         print(f"\n{'='*80}")
         print(f"[Recurring Reservations] SUMMARY")
         print(f"{'='*80}")
         print(f"Total reservas_fijas processed: {len(reservas_fijas)}")
-        print(f"Total reservations created: {total_created}")
-        
+        print(f"Total created:                  {total_created}")
+        print(f"Total skipped (already exist):   {total_skipped_existing}")
+        print(f"Total skipped (conflict):        {total_skipped_conflict}")
+
         if created_details:
-            print(f"\nCreated Reservations List:")
+            print(f"\nCreated:")
             print(f"{'-'*80}")
-            for detail in created_details:
-                print(f"  {detail['dia']:10} {detail['fecha']} {detail['hora']:8} | {detail['nombre']:30} | {detail['precio']:>6} CRC | Cancha {detail['cancha_id']}")
+            for d in created_details:
+                print(f"  {d['dia']:10} {d['fecha']} {d['hora']:8} | {d['nombre']:30} | {d['precio']:>6} CRC | Cancha {d['cancha_id']}")
+
+        if skipped_details:
+            print(f"\nSkipped (conflict):")
             print(f"{'-'*80}")
-        else:
-            print("\nNo new reservations created (all already exist)")
+            for d in skipped_details:
+                print(f"  {d['dia']:10} {d['fecha']} {d['hora']:8} | {d['nombre']:30} | Cancha {d['cancha_id']} | {d['reason']}")
+
+        if not created_details and not skipped_details:
+            print("\nAll 8th-week slots already exist")
         print(f"{'='*80}\n")
-        
+
         return JsonResponse({
             'success': True,
-            'message': f'Generated {total_created} reservations from {len(reservas_fijas)} reservas_fijas',
+            'message': f'Created {total_created}, skipped {total_skipped_conflict} conflicts, {total_skipped_existing} already existed',
             'reservas_created': total_created,
-            'details': created_details
+            'skipped_existing': total_skipped_existing,
+            'skipped_conflict': total_skipped_conflict,
+            'details': created_details,
+            'skipped': skipped_details
         })
-        
+
     except Exception as e:
         print(f"[Recurring Reservations] Error: {str(e)}")
         return JsonResponse({
