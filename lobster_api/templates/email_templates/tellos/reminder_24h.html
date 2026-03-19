@@ -309,8 +309,8 @@
                   </table>
                 </div>
 
-                <!-- SABANA SINPE Warning - Only show if sinpe_reserva is null -->
-                {% if local_id == 1 and not sinpe_reserva %}
+                <!-- Adelanto Warning - Only show if adelanto not received -->
+                {% if not sinpe_reserva %}
                 <div
                   style="
                     background: rgba(239, 68, 68, 0.1);
@@ -328,7 +328,7 @@
                       font-weight: 700;
                     "
                   >
-                    ⚠️ IMPORTANTE - Pago Pendiente
+                    ⚠️ IMPORTANTE - Adelanto Pendiente
                   </p>
                   <p
                     style="
@@ -338,7 +338,7 @@
                       line-height: 1.5;
                     "
                   >
-                    No hemos recibido su comprobante de SINPE. Si no realiza el pago y sube el comprobante, 
+                    No hemos recibido su comprobante de adelanto. Si no realiza el pago y sube el comprobante,
                     <strong style="color: #ef4444">su reservación podría ser cancelada</strong>.
                   </p>
                   <table
@@ -362,35 +362,11 @@
                             font-size: 14px;
                           "
                         >
-                          Subir comprobante SINPE
+                          Subir comprobante
                         </a>
                       </td>
                     </tr>
                   </table>
-                </div>
-                {% endif %}
-
-                <!-- GUADALUPE Payment Reminder -->
-                {% if local_id == 2 %}
-                <div
-                  style="
-                    background: rgba(19, 50, 43, 0.3);
-                    border: 1px solid rgba(19, 50, 43, 0.5);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 20px;
-                  "
-                >
-                  <p
-                    style="
-                      margin: 0;
-                      color: rgba(255, 255, 255, 0.9);
-                      font-size: 14px;
-                    "
-                  >
-                    💵 <strong style="color: #cafb45">Recordatorio:</strong> El pago se realiza
-                    directamente en la cancha.
-                  </p>
                 </div>
                 {% endif %}
 

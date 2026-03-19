@@ -202,12 +202,9 @@ def confirm_reservation(request):
 
             """
             
-            if cancha_local == 1:
-                text_content += """Importante: tienes 2 horas para realizar el SINPE y subir el comprobante.
-                Si no lo haces, tu reserva podría cancelarse automáticamente.
-                """
-            else:
-                text_content += "Pago: se realiza directamente en la cancha.\n"
+            text_content += """Importante: tienes 2 horas para realizar el adelanto y subir el comprobante.
+Si no lo haces, tu reserva podría cancelarse automáticamente.
+"""
             
             text_content += f"\nVer detalles de mi reserva: {reserva_url}\n\n"
             text_content += f"ID de reserva: {reserva_id}"

@@ -152,11 +152,11 @@ Jugadores: {context['jugadores']}
 Total: {context['precio_total']} CRC
 """
         
-        # Add SINPE warning for Sabana if payment not received
-        if context['local_id'] == 1 and not context.get('sinpe_reserva'):
+        # Add adelanto warning if payment not received
+        if not context.get('sinpe_reserva'):
             text_content += """
-⚠️ IMPORTANTE - Pago Pendiente
-No hemos recibido su comprobante de SINPE. Si no realiza el pago y sube el comprobante, su reservación podría ser cancelada.
+⚠️ IMPORTANTE - Adelanto Pendiente
+No hemos recibido su comprobante de adelanto. Si no realiza el pago y sube el comprobante, su reservación podría ser cancelada.
 """
         
         text_content += f"""

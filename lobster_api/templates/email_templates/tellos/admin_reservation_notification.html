@@ -414,7 +414,6 @@
                 </div>
 
                 <!-- Payment Status -->
-                {% if local_id == 1 %}
                 <div
                   style="
                     background: rgba(234, 179, 8, 0.1);
@@ -432,7 +431,7 @@
                       font-weight: 600;
                     "
                   >
-                    ⏳ Pendiente de pago SINPE
+                    ⏳ Pendiente de adelanto
                   </p>
                   <p
                     style="
@@ -441,41 +440,9 @@
                       font-size: 13px;
                     "
                   >
-                    El cliente tiene 2 horas para realizar el SINPE y subir el
-                    comprobante.
+                    El cliente tiene 2 horas para realizar el adelanto y subir el comprobante.
                   </p>
                 </div>
-                {% endif %} {% if local_id == 2 %}
-                <div
-                  style="
-                    background: rgba(19, 50, 43, 0.2);
-                    border: 1px solid rgba(26, 92, 58, 0.3);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 20px;
-                  "
-                >
-                  <p
-                    style="
-                      margin: 0;
-                      color: #3d8b5a;
-                      font-size: 14px;
-                      font-weight: 600;
-                    "
-                  >
-                    💵 Pago en cancha
-                  </p>
-                  <p
-                    style="
-                      margin: 8px 0 0 0;
-                      color: rgba(255, 255, 255, 0.7);
-                      font-size: 13px;
-                    "
-                  >
-                    El cliente pagará directamente en la cancha.
-                  </p>
-                </div>
-                {% endif %}
 
                 <!-- View Reservation Button -->
                 <table

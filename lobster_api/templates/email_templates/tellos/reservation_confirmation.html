@@ -297,8 +297,7 @@
                   </table>
                 </div>
 
-                <!-- SABANA Warning Block -->
-                {% if local_id == 1 %}
+                <!-- Adelanto Warning Block -->
                 <div
                   style="
                     background: rgba(234, 179, 8, 0.1);
@@ -326,12 +325,12 @@
                       line-height: 1.5;
                     "
                   >
-                    <strong style="color: #eab308">2 horas</strong> para
-                    realizar el SINPE y subir el comprobante.
+                    Tienes <strong style="color: #eab308">2 horas</strong> para
+                    realizar el adelanto y subir el comprobante.
                   </p>
                   <p
                     style="
-                      margin: 0 0 8px 0;
+                      margin: 0;
                       color: rgba(255, 255, 255, 0.8);
                       font-size: 14px;
                       line-height: 1.5;
@@ -341,31 +340,6 @@
                     automáticamente.
                   </p>
                 </div>
-                {% endif %}
-
-                <!-- GUADALUPE Info Block -->
-                {% if local_id == 2 %}
-                <div
-                  style="
-                    background: rgba(19, 50, 43, 0.3);
-                    border: 1px solid rgba(19, 50, 43, 0.5);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 20px;
-                  "
-                >
-                  <p
-                    style="
-                      margin: 0;
-                      color: rgba(255, 255, 255, 0.9);
-                      font-size: 14px;
-                    "
-                  >
-                    💵 <strong style="color: #cafb45">Pago:</strong> se realiza
-                    directamente en la cancha.
-                  </p>
-                </div>
-                {% endif %}
 
                 <!-- CTA Button -->
                 <table
