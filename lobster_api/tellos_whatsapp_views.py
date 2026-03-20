@@ -82,15 +82,15 @@ def handle_button_tap(phone, msg):
     if not reserva:
         send_whatsapp_text(
             phone,
-            "No encontramos una reservación pendiente asociada a este número."
+            "No encontramos una reservación pendiente asociada a este número. ❌"
         )
         return
 
     if reserva.get('whatsapp_confirmada') is not None:
         send_whatsapp_text(
             phone,
-            "Tu reservación ya fue confirmada. Si deseás cancelar, escríbenos un mensaje.\n\n"
-            "Podés hacer otra reservación en futboltello.com"
+            "Su reservación ya fue confirmada. ✅ Si desea cancelar, escríbanos un mensaje.\n\n"
+            "Puede hacer otra reservación en futboltello.com ⚽️"
         )
         return
 
@@ -103,8 +103,8 @@ def handle_button_tap(phone, msg):
 
         send_whatsapp_text(
             phone,
-            "¡Tu reservación está confirmada! Te esperamos.\n\n"
-            "Si deseás hacer otra reservación: futboltello.com"
+            "¡Su reservación está confirmada! Les esperamos 👋🏻.\n\n"
+            "Si desea hacer otra reservación: futboltello.com ⚽️"
         )
 
     elif button_text == "Cancelar":
@@ -112,8 +112,8 @@ def handle_button_tap(phone, msg):
 
         send_whatsapp_interactive_buttons(
             phone,
-            f"¿Estás seguro/a que deseás cancelar tu reservación "
-            f"para el {fecha} a las {hora} en {cancha_display}?",
+            f"¿Está seguro/a que desea cancelar su reservación "
+            f"para el {fecha} a las {hora} de {cancha_display}❓",
             [
                 {"id": "CONFIRM_CANCEL", "title": "Sí, cancelar"},
                 {"id": "CONFIRM_RESERVA", "title": "Confirmar reserva"},
@@ -130,16 +130,16 @@ def handle_interactive_tap(phone, msg):
     if not reserva:
         send_whatsapp_text(
             phone,
-            "No encontramos una reservación pendiente asociada a este número.\n\n"
-            "Podés hacer una nueva reservación en futboltello.com"
+            "No encontramos una reservación pendiente asociada a este número ❌.\n\n"
+            "Puede hacer una nueva reservación en futboltello.com ⚽️"
         )
         return
 
     if reserva.get('whatsapp_confirmada') is not None:
         send_whatsapp_text(
             phone,
-            "Tu reservación ya fue procesada.\n\n"
-            "Podés hacer otra reservación en futboltello.com"
+            "Su reservación ya ha sido procesada.\n\n"
+            "Puede hacer otra reservación en futboltello.com ⚽️"
         )
         return
 
@@ -150,8 +150,8 @@ def handle_interactive_tap(phone, msg):
 
         send_whatsapp_text(
             phone,
-            "Tu reservación ha sido cancelada.\n\n"
-            "Podés hacer una nueva reservación cuando gustés: futboltello.com"
+            "Su reservación ha sido cancelada ❌.\n\n"
+            "Puede hacer una nueva reservación cuando guste en: futboltello.com ⚽️"
         )
 
     elif button_id == "CONFIRM_RESERVA":
@@ -161,7 +161,7 @@ def handle_interactive_tap(phone, msg):
 
         send_whatsapp_text(
             phone,
-            "¡Tu reservación sigue en pie! Te esperamos."
+            "¡Su reservación ha sido confirmada! Les esperamos ⚽️."
         )
 
 
