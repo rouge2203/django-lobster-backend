@@ -3,6 +3,7 @@ from . import views
 from . import fcprosoccertryouts_views
 from . import tellos_views
 from . import tasks
+from . import tellos_whatsapp_views
 
 urlpatterns = [
     path('greetings', views.greetings, name='greetings'),
@@ -15,4 +16,6 @@ urlpatterns = [
     path('tasks/send-24h-reminders', tasks.send_24h_reminders, name='send_24h_reminders'),
     path('tasks/send-daily-schedule', tasks.send_daily_schedule, name='send_daily_schedule'),
     path('tasks/generate-recurring-reservations', tasks.generate_recurring_reservations, name='generate_recurring_reservations'),
+    # Whatsapp webhook
+    path('whatsapp/webhook', tellos_whatsapp_views.whatsapp_webhook, name='whatsapp_webhook'),
 ]

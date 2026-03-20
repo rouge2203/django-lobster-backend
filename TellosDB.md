@@ -1,5 +1,7 @@
 # Futbol Tellos Database Schema
 
+UPDATED ON MARCH 19, 2026
+
 ## Connection Details
 
 | Property | Value                                      |
@@ -30,15 +32,15 @@ Courts/fields available for reservation.
 
 ### Columns
 
-| Column       | Type                     | Nullable | Default |
-| ------------ | ------------------------ | -------- | ------- |
-| `id`         | bigint                   | NOT NULL | -       |
-| `created_at` | timestamp with time zone | NOT NULL | `now()` |
-| `nombre`     | text                     | YES      | -       |
-| `cantidad`   | text                     | YES      | -       |
-| `img`        | text                     | YES      | -       |
-| `local`      | smallint                 | YES      | -       |
-| `precio`     | text                     | YES      | -       |
+| Column       | Type                     | Nullable | Default  |
+| ------------ | ------------------------ | -------- | -------- |
+| `id`         | bigint                   | NOT NULL | identity |
+| `created_at` | timestamp with time zone | NOT NULL | `now()`  |
+| `nombre`     | text                     | YES      | -        |
+| `cantidad`   | text                     | YES      | -        |
+| `img`        | text                     | YES      | -        |
+| `local`      | smallint                 | YES      | -        |
+| `precio`     | text                     | YES      | -        |
 
 ### Constraints
 
@@ -90,17 +92,25 @@ Individual reservations for courts.
 
 ### Constraints
 
-| Name                                | Type        | Column                | References           | On Update | On Delete |
-| ----------------------------------- | ----------- | --------------------- | -------------------- | --------- | --------- |
-| `reservas_pkey`                     | PRIMARY KEY | `id`                  | -                    | -         | -         |
-| `reservas_cancha_id_fkey`           | FOREIGN KEY | `cancha_id`           | `canchas(id)`        | NO ACTION | NO ACTION |
-| `reservas_reservacion_fija_id_fkey` | FOREIGN KEY | `reservacion_fija_id` | `reservas_fijas(id)` | NO ACTION | SET NULL  |
+| Name                                | Type        | Column                   | References           | On Update | On Delete |
+| ----------------------------------- | ----------- | ------------------------ | -------------------- | --------- | --------- |
+| `reservas_pkey`                     | PRIMARY KEY | `id`                     | -                    | -         | -         |
+| `reservas_cancha_hora_unique`       | UNIQUE      | `cancha_id, hora_inicio` | -                    | -         | -         |
+| `reservas_cancha_id_fkey`           | FOREIGN KEY | `cancha_id`              | `canchas(id)`        | NO ACTION | NO ACTION |
+| `reservas_reservacion_fija_id_fkey` | FOREIGN KEY | `reservacion_fija_id`    | `reservas_fijas(id)` | NO ACTION | SET NULL  |
 
 ### Indexes
 
-| Name            | Definition                          |
-| --------------- | ----------------------------------- |
-| `reservas_pkey` | `UNIQUE INDEX ... USING btree (id)` |
+| Name                          | Definition                                              |
+| ----------------------------- | ------------------------------------------------------- |
+| `reservas_pkey`               | `UNIQUE INDEX ... USING btree (id)`                     |
+| `reservas_cancha_hora_unique` | `UNIQUE INDEX ... USING btree (cancha_id, hora_inicio)` |
+
+### Triggers
+
+| Name                       | Event                   | For Each | Function                         |
+| -------------------------- | ----------------------- | -------- | -------------------------------- |
+| `trg_check_linked_canchas` | BEFORE INSERT OR UPDATE | ROW      | `check_reserva_linked_canchas()` |
 
 ### RLS Policies
 
@@ -381,6 +391,16 @@ Waiting list entries for fully booked time slots.
 
 ---
 
+## Database Functions
+
+### `check_reserva_linked_canchas()`
+
+Trigger function that prevents conflicting reservations between cancha 6 (full field) and canchas 1, 3, 5 (individual fields). If cancha 6 is being reserved, it checks that none of canchas 1, 3, 5 have a reservation at the same `hora_inicio`, and vice versa. Raises exception with SQLSTATE `23505` on conflict.
+
+**Used by trigger:** `trg_check_linked_canchas` on `reservas` (BEFORE INSERT OR UPDATE)
+
+---
+
 ## Entity Relationships
 
 ```
@@ -473,7 +493,7 @@ Waiting list entries for fully booked time slots.
 
 ### Locations
 
-- **Cancha 6** is linked to canchas 4 & 5 in the application logic (LINKED_CANCHAS)
+- **Cancha 6** is the full field composed of canchas 1, 3, 5 — enforced by the `check_reserva_linked_canchas()` trigger
 - **local** field: `1` = Guadalupe, `2` = Sabana (in canchas)
 - **configuracion** stores opening/closing hours per location
 
@@ -488,6 +508,11 @@ Waiting list entries for fully booked time slots.
 - When a `reserva_fija` is deleted → `reservas.reservacion_fija_id` set to NULL (preserves history)
 - When a `reserva` is deleted → related `pagos` and `retos` are also deleted (CASCADE)
 - When a `cancha` is deleted → `reservas_fijas.cancha_id` set to NULL
+
+### Unique Constraints
+
+- **reservas** has a UNIQUE constraint on `(cancha_id, hora_inicio)` — prevents double-booking
+- **retos** has a UNIQUE constraint on `reserva_id` (one-to-one with reservas)
 
 ### Special Relationships
 
