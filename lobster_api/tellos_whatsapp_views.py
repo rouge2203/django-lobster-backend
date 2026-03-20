@@ -1,7 +1,7 @@
 import json
-import environ
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .supabase_client import get_supabase_client
@@ -10,9 +10,6 @@ from .whatsapp_utils import (
     send_whatsapp_text,
     send_whatsapp_interactive_buttons,
 )
-
-env = environ.Env()
-VERIFY_TOKEN = env('DUALHOOK_TOKEN')
 
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 
@@ -179,7 +176,7 @@ def whatsapp_webhook(request):
         token = request.GET.get("hub.verify_token")
         challenge = request.GET.get("hub.challenge")
 
-        if mode == "subscribe" and token == VERIFY_TOKEN:
+        if mode == "subscribe" and token == settings.DUALHOOK_TOKEN:
             return HttpResponse(challenge, status=200)
         return HttpResponse("Forbidden", status=403)
 

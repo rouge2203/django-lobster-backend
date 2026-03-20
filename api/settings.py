@@ -176,3 +176,8 @@ SUPABASE_KEY = env('SUPABASE_KEY')
 
 # Cron job security
 CRON_SECRET = env('CRON_SECRET', default='')
+
+# WhatsApp Cloud API (Meta Graph API v22.0)
+WHATSAPP_PHONE_NUMBER_ID = env('WHATSAPP_PHONE_NUMBER_ID', default='')
+WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')
+DUALHOOK_TOKEN = env('DUALHOOK_TOKEN', default='')

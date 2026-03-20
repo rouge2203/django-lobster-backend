@@ -1,17 +1,6 @@
 import re
 import requests
-import environ
-
-env = environ.Env()
-
-WHATSAPP_PHONE_NUMBER_ID = env('WHATSAPP_PHONE_NUMBER_ID')
-WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN')
-
-WA_API_URL = f"https://graph.facebook.com/v22.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
-WA_HEADERS = {
-    "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}",
-    "Content-Type": "application/json",
-}
+from django.conf import settings
 
 
 def normalize_phone(raw):
@@ -25,6 +14,17 @@ def normalize_phone(raw):
     return digits
 
 
+def _get_api_url():
+    return f"https://graph.facebook.com/v22.0/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
+
+
+def _get_headers():
+    return {
+        "Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+
 def send_whatsapp_text(to, body):
     """Send a plain text WhatsApp message via the Cloud API."""
     payload = {
@@ -33,7 +33,7 @@ def send_whatsapp_text(to, body):
         "type": "text",
         "text": {"body": body},
     }
-    return requests.post(WA_API_URL, json=payload, headers=WA_HEADERS)
+    return requests.post(_get_api_url(), json=payload, headers=_get_headers())
 
 
 def send_whatsapp_interactive_buttons(to, body_text, buttons):
@@ -53,7 +53,7 @@ def send_whatsapp_interactive_buttons(to, body_text, buttons):
             },
         },
     }
-    return requests.post(WA_API_URL, json=payload, headers=WA_HEADERS)
+    return requests.post(_get_api_url(), json=payload, headers=_get_headers())
 
 
 def send_whatsapp_template(to, template_name, language_code, components):
@@ -68,4 +68,4 @@ def send_whatsapp_template(to, template_name, language_code, components):
             "components": components,
         },
     }
-    return requests.post(WA_API_URL, json=payload, headers=WA_HEADERS)
+    return requests.post(_get_api_url(), json=payload, headers=_get_headers())

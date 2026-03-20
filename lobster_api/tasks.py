@@ -1194,7 +1194,8 @@ def send_whatsapp_reminders(request):
                 results.append({'reserva_id': reserva['id'], 'status': 'failed', 'error': 'No cancha data'})
                 continue
 
-            phone = normalize_phone(reserva['celular_reserva'])
+            raw_phone = reserva['celular_reserva']
+            phone = normalize_phone(raw_phone)
 
             hora_inicio = reserva['hora_inicio']
             try:
@@ -1209,6 +1210,14 @@ def send_whatsapp_reminders(request):
 
             local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
             cancha_display = f"{cancha['nombre']} en {local_nombre}"
+
+            print(f"[WhatsApp Reminders] Processing reserva {reserva['id']}:")
+            print(f"  Nombre:  {reserva['nombre_reserva']}")
+            print(f"  Phone:   {raw_phone} → {phone}")
+            print(f"  Fecha:   {fecha}")
+            print(f"  Hora:    {hora}")
+            print(f"  Cancha:  {cancha_display}")
+            print(f"  Reserva: {hora_inicio}")
 
             components = [
                 {"type": "header", "parameters": []},
@@ -1232,19 +1241,50 @@ def send_whatsapp_reminders(request):
                         'whatsapp_enviado': True
                     }).eq('id', reserva['id']).execute()
                     print(f"[WhatsApp Reminders] SENT → {phone} (reserva {reserva['id']})")
-                    results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'sent'})
+                    results.append({
+                        'reserva_id': reserva['id'],
+                        'phone': phone,
+                        'nombre': reserva['nombre_reserva'],
+                        'fecha': fecha,
+                        'hora': hora,
+                        'cancha': cancha_display,
+                        'status': 'sent',
+                    })
                 else:
                     failed += 1
                     error_body = resp.json()
                     print(f"[WhatsApp Reminders] FAILED → {phone}: {error_body}")
-                    results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'failed', 'error': str(error_body)})
+                    results.append({
+                        'reserva_id': reserva['id'],
+                        'phone': phone,
+                        'nombre': reserva['nombre_reserva'],
+                        'status': 'failed',
+                        'error': str(error_body),
+                    })
 
             except Exception as e:
                 failed += 1
                 print(f"[WhatsApp Reminders] ERROR → {phone}: {str(e)}")
-                results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'error', 'error': str(e)})
+                results.append({
+                    'reserva_id': reserva['id'],
+                    'phone': phone,
+                    'nombre': reserva['nombre_reserva'],
+                    'status': 'error',
+                    'error': str(e),
+                })
 
-        print(f"[WhatsApp Reminders] SUMMARY: {sent} sent, {failed} failed")
+        print(f"\n{'='*60}")
+        print(f"[WhatsApp Reminders] SUMMARY")
+        print(f"{'='*60}")
+        print(f"  Total processed: {len(reservations)}")
+        print(f"  Sent:            {sent}")
+        print(f"  Failed:          {failed}")
+        if results:
+            print(f"\n  Details:")
+            for r in results:
+                status_icon = 'OK' if r['status'] == 'sent' else 'FAIL'
+                print(f"    [{status_icon}] {r['nombre']} → {r['phone']} ({r.get('cancha', 'N/A')})")
+        print(f"{'='*60}")
 
         return JsonResponse({
             'success': True,
