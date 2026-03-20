@@ -1220,7 +1220,6 @@ def send_whatsapp_reminders(request):
             print(f"  Reserva: {hora_inicio}")
 
             components = [
-                {"type": "header", "parameters": []},
                 {
                     "type": "body",
                     "parameters": [
@@ -1234,13 +1233,16 @@ def send_whatsapp_reminders(request):
 
             try:
                 resp = send_whatsapp_template(phone, "reservation_reminder", "es", components)
+                resp_body = resp.json()
+                print(f"[WhatsApp Reminders] API response ({resp.status_code}): {resp_body}")
 
                 if resp.status_code == 200:
                     sent += 1
                     supabase.table('reservas').update({
                         'whatsapp_enviado': True
                     }).eq('id', reserva['id']).execute()
-                    print(f"[WhatsApp Reminders] SENT → {phone} (reserva {reserva['id']})")
+                    msg_id = resp_body.get('messages', [{}])[0].get('id', 'N/A')
+                    print(f"[WhatsApp Reminders] SENT → {phone} (reserva {reserva['id']}, wa_msg_id: {msg_id})")
                     results.append({
                         'reserva_id': reserva['id'],
                         'phone': phone,
