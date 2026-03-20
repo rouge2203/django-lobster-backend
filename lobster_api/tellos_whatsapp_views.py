@@ -182,14 +182,24 @@ def whatsapp_webhook(request):
 
     if request.method == "POST":
         body = json.loads(request.body)
+        print(f"[WhatsApp Webhook] Incoming payload: {json.dumps(body, indent=2)}")
 
         entry = body.get("entry", [{}])[0]
         changes = entry.get("changes", [{}])[0]
         value = changes.get("value", {})
-        messages = value.get("messages", [])
 
+        statuses = value.get("statuses", [])
+        for status in statuses:
+            print(f"[WhatsApp Webhook] STATUS UPDATE: "
+                  f"recipient={status.get('recipient_id')} "
+                  f"status={status.get('status')} "
+                  f"timestamp={status.get('timestamp')} "
+                  f"errors={status.get('errors', 'none')}")
+
+        messages = value.get("messages", [])
         for msg in messages:
             phone = msg["from"]
+            print(f"[WhatsApp Webhook] MESSAGE: type={msg['type']} from={phone}")
 
             if msg["type"] == "button":
                 handle_button_tap(phone, msg)
