@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from io import BytesIO
 from .supabase_client import get_supabase_client
+from .whatsapp_utils import normalize_phone, send_whatsapp_template
 
 # PDF generation imports
 from reportlab.lib import colors
@@ -1131,6 +1132,130 @@ def generate_recurring_reservations(request):
 
     except Exception as e:
         print(f"[Recurring Reservations] Error: {str(e)}")
+        return JsonResponse({
+            'error': 'Internal server error',
+            'details': str(e)
+        }, status=500)
+
+
+@api_view(['GET'])
+def send_whatsapp_reminders(request):
+    """
+    Cron task: Send WhatsApp template reminders for reservations.
+    TEST MODE — only processes reservas where nombre_reserva == 'Prueba'.
+    Intended to run every 12 hours.
+    """
+    auth_header = request.headers.get('Authorization', '')
+    expected_secret = f"Bearer {settings.CRON_SECRET}"
+
+    if settings.CRON_SECRET and auth_header != expected_secret:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    try:
+        supabase = get_supabase_client()
+
+        now_utc = datetime.now(timezone.utc)
+        now_cr = now_utc.astimezone(COSTA_RICA_TZ)
+
+        window_start = now_cr.strftime('%Y-%m-%d %H:%M:%S')
+        window_end = (now_cr + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
+
+        print(f"[WhatsApp Reminders] Current time (CR): {window_start}")
+        print(f"[WhatsApp Reminders] Window: {window_start} → {window_end}")
+
+        response = supabase.table('reservas').select('*, canchas(nombre, local)') \
+            .eq('nombre_reserva', 'Prueba') \
+            .is_('whatsapp_enviado', 'null') \
+            .not_.is_('celular_reserva', 'null') \
+            .gte('hora_inicio', window_start) \
+            .lte('hora_inicio', window_end) \
+            .execute()
+
+        reservations = response.data
+        print(f"[WhatsApp Reminders] Found {len(reservations)} reservations")
+
+        if not reservations:
+            return JsonResponse({
+                'success': True,
+                'message': 'No test reservations need WhatsApp reminders',
+                'sent': 0,
+                'failed': 0,
+            })
+
+        sent = 0
+        failed = 0
+        results = []
+
+        for reserva in reservations:
+            cancha = reserva.get('canchas')
+            if not cancha:
+                print(f"[WhatsApp Reminders] No cancha for reserva {reserva['id']}")
+                failed += 1
+                results.append({'reserva_id': reserva['id'], 'status': 'failed', 'error': 'No cancha data'})
+                continue
+
+            phone = normalize_phone(reserva['celular_reserva'])
+
+            hora_inicio = reserva['hora_inicio']
+            try:
+                inicio_dt = datetime.strptime(hora_inicio, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                inicio_dt = datetime.fromisoformat(hora_inicio.replace('Z', '+00:00'))
+
+            fecha = f"{inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
+            hora_str = inicio_dt.strftime('%I:%M').lstrip('0')
+            periodo = 'A.M.' if inicio_dt.hour < 12 else 'P.M.'
+            hora = f"{hora_str} {periodo}"
+
+            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+            cancha_display = f"{cancha['nombre']} en {local_nombre}"
+
+            components = [
+                {"type": "header", "parameters": []},
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": reserva['nombre_reserva']},
+                        {"type": "text", "text": fecha},
+                        {"type": "text", "text": hora},
+                        {"type": "text", "text": cancha_display},
+                    ],
+                },
+            ]
+
+            try:
+                resp = send_whatsapp_template(phone, "reservation_reminder", "es", components)
+
+                if resp.status_code == 200:
+                    sent += 1
+                    supabase.table('reservas').update({
+                        'whatsapp_enviado': True
+                    }).eq('id', reserva['id']).execute()
+                    print(f"[WhatsApp Reminders] SENT → {phone} (reserva {reserva['id']})")
+                    results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'sent'})
+                else:
+                    failed += 1
+                    error_body = resp.json()
+                    print(f"[WhatsApp Reminders] FAILED → {phone}: {error_body}")
+                    results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'failed', 'error': str(error_body)})
+
+            except Exception as e:
+                failed += 1
+                print(f"[WhatsApp Reminders] ERROR → {phone}: {str(e)}")
+                results.append({'reserva_id': reserva['id'], 'phone': phone, 'status': 'error', 'error': str(e)})
+
+        print(f"[WhatsApp Reminders] SUMMARY: {sent} sent, {failed} failed")
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Sent {sent} WhatsApp reminders, {failed} failed',
+            'sent': sent,
+            'failed': failed,
+            'details': results,
+        })
+
+    except Exception as e:
+        print(f"[WhatsApp Reminders] Error: {str(e)}")
         return JsonResponse({
             'error': 'Internal server error',
             'details': str(e)

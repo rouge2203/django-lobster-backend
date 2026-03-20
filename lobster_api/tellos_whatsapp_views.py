@@ -1,14 +1,179 @@
 import json
 import environ
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from .supabase_client import get_supabase_client
+from .whatsapp_utils import (
+    normalize_phone,
+    send_whatsapp_text,
+    send_whatsapp_interactive_buttons,
+)
 
 env = environ.Env()
 VERIFY_TOKEN = env('DUALHOOK_TOKEN')
 
+COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
+
+MESES_ESPANOL = {
+    1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+    5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+    9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def find_reservation_by_phone(phone):
+    """
+    Find the upcoming reservation whose WhatsApp reminder was already sent
+    and whose celular_reserva matches the incoming phone (after normalization).
+    Returns (reserva_dict, cancha_dict) or (None, None).
+    """
+    supabase = get_supabase_client()
+    normalized = normalize_phone(phone)
+
+    now_str = datetime.now(timezone.utc).astimezone(COSTA_RICA_TZ).strftime('%Y-%m-%d %H:%M:%S')
+
+    response = supabase.table('reservas').select('*, canchas(nombre, local)') \
+        .eq('whatsapp_enviado', True) \
+        .not_.is_('celular_reserva', 'null') \
+        .gte('hora_inicio', now_str) \
+        .order('hora_inicio') \
+        .execute()
+
+    for reserva in response.data:
+        if normalize_phone(reserva['celular_reserva']) == normalized:
+            cancha = reserva.pop('canchas', None)
+            return reserva, cancha
+
+    return None, None
+
+
+def format_reserva_details(reserva, cancha):
+    """Return (fecha, hora, cancha_display) strings for WhatsApp messages."""
+    hora_inicio = reserva['hora_inicio']
+    try:
+        dt = datetime.strptime(hora_inicio, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        dt = datetime.fromisoformat(hora_inicio.replace('Z', '+00:00'))
+
+    fecha = f"{dt.day} de {MESES_ESPANOL[dt.month]}"
+    hora_str = dt.strftime('%I:%M').lstrip('0')
+    periodo = 'A.M.' if dt.hour < 12 else 'P.M.'
+    hora = f"{hora_str} {periodo}"
+
+    local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+    cancha_display = f"{cancha['nombre']} en {local_nombre}"
+
+    return fecha, hora, cancha_display
+
+
+# ---------------------------------------------------------------------------
+# Button handlers
+# ---------------------------------------------------------------------------
+
+def handle_button_tap(phone, msg):
+    """Handle template quick-reply buttons: Confirmar / Cancelar."""
+    button_text = msg["button"]["text"]
+
+    reserva, cancha = find_reservation_by_phone(phone)
+
+    if not reserva:
+        send_whatsapp_text(
+            phone,
+            "No encontramos una reservación pendiente asociada a este número."
+        )
+        return
+
+    if reserva.get('whatsapp_confirmada') is not None:
+        send_whatsapp_text(
+            phone,
+            "Tu reservación ya fue confirmada. Si deseás cancelar, escríbenos un mensaje.\n\n"
+            "Podés hacer otra reservación en futboltello.com"
+        )
+        return
+
+    supabase = get_supabase_client()
+
+    if button_text == "Confirmar":
+        supabase.table('reservas').update({
+            'whatsapp_confirmada': True
+        }).eq('id', reserva['id']).execute()
+
+        send_whatsapp_text(
+            phone,
+            "¡Tu reservación está confirmada! Te esperamos.\n\n"
+            "Si deseás hacer otra reservación: futboltello.com"
+        )
+
+    elif button_text == "Cancelar":
+        fecha, hora, cancha_display = format_reserva_details(reserva, cancha)
+
+        send_whatsapp_interactive_buttons(
+            phone,
+            f"¿Estás seguro/a que deseás cancelar tu reservación "
+            f"para el {fecha} a las {hora} en {cancha_display}?",
+            [
+                {"id": "CONFIRM_CANCEL", "title": "Sí, cancelar"},
+                {"id": "CONFIRM_RESERVA", "title": "Confirmar reserva"},
+            ],
+        )
+
+
+def handle_interactive_tap(phone, msg):
+    """Handle interactive button taps: Sí cancelar / Confirmar reserva."""
+    button_id = msg["interactive"]["button_reply"]["id"]
+
+    reserva, cancha = find_reservation_by_phone(phone)
+
+    if not reserva:
+        send_whatsapp_text(
+            phone,
+            "No encontramos una reservación pendiente asociada a este número.\n\n"
+            "Podés hacer una nueva reservación en futboltello.com"
+        )
+        return
+
+    if reserva.get('whatsapp_confirmada') is not None:
+        send_whatsapp_text(
+            phone,
+            "Tu reservación ya fue procesada.\n\n"
+            "Podés hacer otra reservación en futboltello.com"
+        )
+        return
+
+    supabase = get_supabase_client()
+
+    if button_id == "CONFIRM_CANCEL":
+        supabase.table('reservas').delete().eq('id', reserva['id']).execute()
+
+        send_whatsapp_text(
+            phone,
+            "Tu reservación ha sido cancelada.\n\n"
+            "Podés hacer una nueva reservación cuando gustés: futboltello.com"
+        )
+
+    elif button_id == "CONFIRM_RESERVA":
+        supabase.table('reservas').update({
+            'whatsapp_confirmada': True
+        }).eq('id', reserva['id']).execute()
+
+        send_whatsapp_text(
+            phone,
+            "¡Tu reservación sigue en pie! Te esperamos."
+        )
+
+
+# ---------------------------------------------------------------------------
+# Main webhook view
+# ---------------------------------------------------------------------------
+
 @csrf_exempt
 def whatsapp_webhook(request):
-    # 1. Meta verification handshake (GET)
     if request.method == "GET":
         mode = request.GET.get("hub.mode")
         token = request.GET.get("hub.verify_token")
@@ -18,29 +183,24 @@ def whatsapp_webhook(request):
             return HttpResponse(challenge, status=200)
         return HttpResponse("Forbidden", status=403)
 
-    # 2. Incoming messages / button taps (POST)
     if request.method == "POST":
         body = json.loads(request.body)
-        
-        # Extract the message
+
         entry = body.get("entry", [{}])[0]
         changes = entry.get("changes", [{}])[0]
         value = changes.get("value", {})
         messages = value.get("messages", [])
 
         for msg in messages:
-            phone = msg["from"]  # e.g. "50686167000"
-            
+            phone = msg["from"]
+
             if msg["type"] == "button":
-                # Customer tapped a quick reply button
-                button_text = msg["button"]["text"]  # "Confirmar" or "Cancelar"
-                
-                # YOUR LOGIC HERE
-                # look up reservation by phone number
-                # handle confirm or cancel
-                
+                handle_button_tap(phone, msg)
+
+            elif msg["type"] == "interactive":
+                handle_interactive_tap(phone, msg)
+
             elif msg["type"] == "text":
-                # Regular text message
-                text = msg["text"]["body"]
+                pass
 
         return JsonResponse({"status": "ok"}, status=200)
