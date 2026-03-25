@@ -17,6 +17,7 @@ urlpatterns = [
     path('tasks/send-daily-schedule', tasks.send_daily_schedule, name='send_daily_schedule'),
     path('tasks/generate-recurring-reservations', tasks.generate_recurring_reservations, name='generate_recurring_reservations'),
     path('tasks/send-whatsapp-reminders', tasks.send_whatsapp_reminders, name='send_whatsapp_reminders'),
+    path('tasks/send-reservation-info', tasks.send_reservation_info, name='send_reservation_info'),
     # Whatsapp webhook
     path('whatsapp/webhook', tellos_whatsapp_views.whatsapp_webhook, name='whatsapp_webhook'),
 ]

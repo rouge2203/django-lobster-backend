@@ -1163,7 +1163,7 @@ def send_whatsapp_reminders(request):
         print(f"[WhatsApp Reminders] Current time (CR): {window_start}")
         print(f"[WhatsApp Reminders] Window: {window_start} → {window_end}")
 
-        response = supabase.table('reservas').select('*, canchas(nombre, local)') \
+        response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
             .eq('nombre_reserva', 'Prueba') \
             .is_('whatsapp_enviado', 'null') \
             .not_.is_('celular_reserva', 'null') \
@@ -1208,8 +1208,9 @@ def send_whatsapp_reminders(request):
             periodo = 'A.M.' if inicio_dt.hour < 12 else 'P.M.'
             hora = f"{hora_str} {periodo}"
 
+            cantidad = cancha.get('cantidad', '5')
+            cancha_display = f"{cancha['nombre']} (Fut {cantidad})"
             local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
-            cancha_display = f"{cancha['nombre']} en {local_nombre}"
 
             print(f"[WhatsApp Reminders] Processing reserva {reserva['id']}:")
             print(f"  Nombre:  {reserva['nombre_reserva']}")
@@ -1227,6 +1228,7 @@ def send_whatsapp_reminders(request):
                         {"type": "text", "text": fecha},
                         {"type": "text", "text": hora},
                         {"type": "text", "text": cancha_display},
+                        {"type": "text", "text": local_nombre},
                     ],
                 },
             ]
@@ -1298,6 +1300,176 @@ def send_whatsapp_reminders(request):
 
     except Exception as e:
         print(f"[WhatsApp Reminders] Error: {str(e)}")
+        return JsonResponse({
+            'error': 'Internal server error',
+            'details': str(e)
+        }, status=500)
+
+
+@api_view(['GET'])
+def send_reservation_info(request):
+    """
+    Cron task: Send WhatsApp reservation_info template for newly created reservations.
+    TEST MODE — only processes reservas where nombre_reserva == 'Prueba'.
+    Checks reservas created in the last 10 minutes.
+    """
+    auth_header = request.headers.get('Authorization', '')
+    expected_secret = f"Bearer {settings.CRON_SECRET}"
+
+    if settings.CRON_SECRET and auth_header != expected_secret:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    try:
+        supabase = get_supabase_client()
+
+        now_utc = datetime.now(timezone.utc)
+        window_start = (now_utc - timedelta(minutes=10)).isoformat()
+
+        print(f"[Reservation Info] Current time (UTC): {now_utc.isoformat()}")
+        print(f"[Reservation Info] Window: created_at >= {window_start}")
+
+        response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
+            .eq('nombre_reserva', 'Prueba') \
+            .not_.is_('celular_reserva', 'null') \
+            .gte('created_at', window_start) \
+            .execute()
+
+        reservations = response.data
+        print(f"[Reservation Info] Found {len(reservations)} new reservations")
+
+        if not reservations:
+            return JsonResponse({
+                'success': True,
+                'message': 'No new test reservations to notify',
+                'sent': 0,
+                'failed': 0,
+            })
+
+        now_cr = now_utc.astimezone(COSTA_RICA_TZ)
+        sent = 0
+        failed = 0
+        results = []
+
+        for reserva in reservations:
+            cancha = reserva.get('canchas')
+            if not cancha:
+                print(f"[Reservation Info] No cancha for reserva {reserva['id']}")
+                failed += 1
+                results.append({'reserva_id': reserva['id'], 'status': 'failed', 'error': 'No cancha data'})
+                continue
+
+            raw_phone = reserva['celular_reserva']
+            phone = normalize_phone(raw_phone)
+
+            hora_inicio = reserva['hora_inicio']
+            try:
+                inicio_dt = datetime.strptime(hora_inicio, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                inicio_dt = datetime.fromisoformat(hora_inicio.replace('Z', '+00:00'))
+
+            fecha = f"{inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
+            hora_str = inicio_dt.strftime('%I:%M').lstrip('0')
+            periodo = 'A.M.' if inicio_dt.hour < 12 else 'P.M.'
+            hora = f"{hora_str} {periodo}"
+
+            cantidad = cancha.get('cantidad', '5')
+            cancha_display = f"{cancha['nombre']} (Fut {cantidad})"
+            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+
+            print(f"[Reservation Info] Processing reserva {reserva['id']}:")
+            print(f"  Nombre:     {reserva['nombre_reserva']}")
+            print(f"  Phone:      {raw_phone} → {phone}")
+            print(f"  Fecha:      {fecha}")
+            print(f"  Hora:       {hora}")
+            print(f"  Cancha:     {cancha_display}")
+            print(f"  Local:      {local_nombre}")
+            print(f"  Created at: {reserva['created_at']}")
+
+            components = [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": reserva['nombre_reserva']},
+                        {"type": "text", "text": fecha},
+                        {"type": "text", "text": hora},
+                        {"type": "text", "text": cancha_display},
+                        {"type": "text", "text": local_nombre},
+                    ],
+                },
+                {
+                    "type": "button",
+                    "sub_type": "url",
+                    "index": "0",
+                    "parameters": [
+                        {"type": "text", "text": str(reserva['id'])},
+                    ],
+                },
+            ]
+
+            try:
+                resp = send_whatsapp_template(phone, "reservation_info", "es", components)
+                resp_body = resp.json()
+                print(f"[Reservation Info] API response ({resp.status_code}): {resp_body}")
+
+                if resp.status_code == 200:
+                    sent += 1
+                    msg_id = resp_body.get('messages', [{}])[0].get('id', 'N/A')
+                    print(f"[Reservation Info] SENT → {phone} (reserva {reserva['id']}, wa_msg_id: {msg_id})")
+                    results.append({
+                        'reserva_id': reserva['id'],
+                        'phone': phone,
+                        'nombre': reserva['nombre_reserva'],
+                        'fecha': fecha,
+                        'hora': hora,
+                        'cancha': cancha_display,
+                        'local': local_nombre,
+                        'status': 'sent',
+                    })
+                else:
+                    failed += 1
+                    print(f"[Reservation Info] FAILED → {phone}: {resp_body}")
+                    results.append({
+                        'reserva_id': reserva['id'],
+                        'phone': phone,
+                        'nombre': reserva['nombre_reserva'],
+                        'status': 'failed',
+                        'error': str(resp_body),
+                    })
+
+            except Exception as e:
+                failed += 1
+                print(f"[Reservation Info] ERROR → {phone}: {str(e)}")
+                results.append({
+                    'reserva_id': reserva['id'],
+                    'phone': phone,
+                    'nombre': reserva['nombre_reserva'],
+                    'status': 'error',
+                    'error': str(e),
+                })
+
+        print(f"\n{'='*60}")
+        print(f"[Reservation Info] SUMMARY")
+        print(f"{'='*60}")
+        print(f"  Total processed: {len(reservations)}")
+        print(f"  Sent:            {sent}")
+        print(f"  Failed:          {failed}")
+        if results:
+            print(f"\n  Details:")
+            for r in results:
+                status_icon = 'OK' if r['status'] == 'sent' else 'FAIL'
+                print(f"    [{status_icon}] {r['nombre']} → {r['phone']} ({r.get('cancha', 'N/A')} - {r.get('local', 'N/A')})")
+        print(f"{'='*60}")
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Sent {sent} reservation info messages, {failed} failed',
+            'sent': sent,
+            'failed': failed,
+            'details': results,
+        })
+
+    except Exception as e:
+        print(f"[Reservation Info] Error: {str(e)}")
         return JsonResponse({
             'error': 'Internal server error',
             'details': str(e)

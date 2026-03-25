@@ -36,20 +36,45 @@ def send_whatsapp_text(to, body):
     return requests.post(_get_api_url(), json=payload, headers=_get_headers())
 
 
-def send_whatsapp_interactive_buttons(to, body_text, buttons):
+def send_whatsapp_interactive_buttons(to, body_text, buttons, footer_text=None):
     """Send an interactive button message (up to 3 buttons)."""
+    interactive = {
+        "type": "button",
+        "body": {"text": body_text},
+        "action": {
+            "buttons": [
+                {"type": "reply", "reply": {"id": b["id"], "title": b["title"]}}
+                for b in buttons
+            ]
+        },
+    }
+    if footer_text:
+        interactive["footer"] = {"text": footer_text}
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "interactive",
+        "interactive": interactive,
+    }
+    return requests.post(_get_api_url(), json=payload, headers=_get_headers())
+
+
+def send_whatsapp_cta_url(to, body_text, footer_text, button_text, url):
+    """Send an interactive CTA URL message with a clickable link button."""
     payload = {
         "messaging_product": "whatsapp",
         "to": to,
         "type": "interactive",
         "interactive": {
-            "type": "button",
+            "type": "cta_url",
             "body": {"text": body_text},
+            "footer": {"text": footer_text},
             "action": {
-                "buttons": [
-                    {"type": "reply", "reply": {"id": b["id"], "title": b["title"]}}
-                    for b in buttons
-                ]
+                "name": "cta_url",
+                "parameters": {
+                    "display_text": button_text,
+                    "url": url,
+                },
             },
         },
     }

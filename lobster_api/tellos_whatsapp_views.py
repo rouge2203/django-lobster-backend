@@ -9,6 +9,7 @@ from .whatsapp_utils import (
     normalize_phone,
     send_whatsapp_text,
     send_whatsapp_interactive_buttons,
+    send_whatsapp_cta_url,
 )
 
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
@@ -35,7 +36,7 @@ def find_reservation_by_phone(phone):
 
     now_str = datetime.now(timezone.utc).astimezone(COSTA_RICA_TZ).strftime('%Y-%m-%d %H:%M:%S')
 
-    response = supabase.table('reservas').select('*, canchas(nombre, local)') \
+    response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
         .eq('whatsapp_enviado', True) \
         .not_.is_('celular_reserva', 'null') \
         .gte('hora_inicio', now_str) \
@@ -51,7 +52,7 @@ def find_reservation_by_phone(phone):
 
 
 def format_reserva_details(reserva, cancha):
-    """Return (fecha, hora, cancha_display) strings for WhatsApp messages."""
+    """Return (fecha, hora, cancha_name, local_nombre) strings for WhatsApp messages."""
     hora_inicio = reserva['hora_inicio']
     try:
         dt = datetime.strptime(hora_inicio, '%Y-%m-%d %H:%M:%S')
@@ -63,10 +64,16 @@ def format_reserva_details(reserva, cancha):
     periodo = 'A.M.' if dt.hour < 12 else 'P.M.'
     hora = f"{hora_str} {periodo}"
 
+    cantidad = cancha.get('cantidad', '5')
+    cancha_name = f"{cancha['nombre']} (Fut {cantidad})"
     local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
-    cancha_display = f"{cancha['nombre']} en {local_nombre}"
 
-    return fecha, hora, cancha_display
+    return fecha, hora, cancha_name, local_nombre
+
+
+def has_payment(reserva):
+    """Check if the reservation has any payment recorded."""
+    return bool(reserva.get('sinpe_reserva')) or reserva.get('pago_checkeado') is True
 
 
 # ---------------------------------------------------------------------------
@@ -101,19 +108,36 @@ def handle_button_tap(phone, msg):
             'whatsapp_confirmada': True
         }).eq('id', reserva['id']).execute()
 
-        send_whatsapp_text(
-            phone,
-            "¡Su reservación está confirmada! Les esperamos 👋🏻.\n\n"
-            "Si desea hacer otra reservación: futboltello.com ⚽️"
-        )
+        reserva_url = f"https://futboltello.com/reservas/{reserva['id']}"
+        if has_payment(reserva):
+            body = (
+                "¡Su reservación ha sido confirmada! ✅\n"
+                f"Puede ver detalles de su reservación y cómo llegar a nuestras instalaciones en {reserva_url}\n"
+                "Les esperamos 👋🏻"
+            )
+        else:
+            body = (
+                "¡Su reservación ha sido confirmada! ✅\n"
+                "*Recuerde hacer un adelanto del 50% del valor de la cancha y subir su comprobante "
+                "o su reservación podría ser cancelada.* ‼️\n"
+                "Les esperamos 👋🏻"
+            )
+        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", "Ver reservación", reserva_url)
 
     elif button_text == "Cancelar":
-        fecha, hora, cancha_display = format_reserva_details(reserva, cancha)
+        fecha, hora, cancha_name, local_nombre = format_reserva_details(reserva, cancha)
 
+        body = (
+            f"Hola {reserva['nombre_reserva']}, ¿está seguro/a que desea cancelar su reservación?\n"
+            f"📆 {fecha}\n"
+            f"🕑 {hora}\n"
+            f"🏟️ {cancha_name}\n"
+            f"📍 {local_nombre}\n"
+            "Recuerde hacer un adelanto del 50% del valor de la cancha y subir su comprobante."
+        )
         send_whatsapp_interactive_buttons(
             phone,
-            f"¿Está seguro/a que desea cancelar su reservación "
-            f"para el {fecha} a las {hora} de {cancha_display}❓",
+            body,
             [
                 {"id": "CONFIRM_CANCEL", "title": "Sí, cancelar"},
                 {"id": "CONFIRM_RESERVA", "title": "Confirmar reserva"},
@@ -159,10 +183,21 @@ def handle_interactive_tap(phone, msg):
             'whatsapp_confirmada': True
         }).eq('id', reserva['id']).execute()
 
-        send_whatsapp_text(
-            phone,
-            "¡Su reservación ha sido confirmada! Les esperamos ⚽️."
-        )
+        reserva_url = f"https://futboltello.com/reservas/{reserva['id']}"
+        if has_payment(reserva):
+            body = (
+                "¡Su reservación ha sido confirmada! ✅\n"
+                f"Puede ver detalles de su reservación y cómo llegar a nuestras instalaciones en {reserva_url}\n"
+                "Les esperamos 👋🏻"
+            )
+        else:
+            body = (
+                "¡Su reservación ha sido confirmada! ✅\n"
+                "*Recuerde hacer un adelanto del 50% del valor de la cancha y subir su comprobante "
+                "o su reservación podría ser cancelada.* ‼️\n"
+                "Les esperamos 👋🏻"
+            )
+        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", "Ver reservación", reserva_url)
 
 
 # ---------------------------------------------------------------------------
