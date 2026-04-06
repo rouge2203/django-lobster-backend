@@ -66,7 +66,7 @@ def format_reserva_details(reserva, cancha):
 
     cantidad = cancha.get('cantidad', '5')
     cancha_name = f"{cancha['nombre']} (Fut {cantidad})"
-    local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+    local_nombre = 'La Sabana' if cancha['local'] == 1 else 'El Carmen de Guadalupe'
 
     return fecha, hora, cancha_name, local_nombre
 

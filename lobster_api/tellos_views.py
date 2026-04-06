@@ -147,7 +147,7 @@ def confirm_reservation(request):
         hora = f"{hora_inicio_str} {periodo_inicio} - {hora_fin_str} {periodo_fin}"
         
         # Determine local name
-        local_nombre = 'Sabana' if cancha_local == 1 else 'Guadalupe'
+        local_nombre = 'La Sabana' if cancha_local == 1 else 'El Carmen de Guadalupe'
         
         # Format arbitro text
         arbitro_text = 'Sí' if arbitro else 'No'

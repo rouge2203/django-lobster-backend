@@ -88,7 +88,7 @@ def format_reservation_for_email(reserva, cancha):
     
     # Determine local name
     local_id = cancha['local']
-    local_nombre = 'Sabana' if local_id == 1 else 'Guadalupe'
+    local_nombre = 'La Sabana' if local_id == 1 else 'El Carmen de Guadalupe'
     
     # Format arbitro text
     arbitro_text = 'Sí' if reserva.get('arbitro', False) else 'No'
@@ -471,7 +471,7 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha, pagos_
     
     def add_cancha_section(cancha, reservations):
         """Add a section for a single cancha with its reservations."""
-        local_name = "Sabana" if cancha['local'] == 1 else "Guadalupe"
+        local_name = "La Sabana" if cancha['local'] == 1 else "El Carmen de Guadalupe"
         elements.append(Paragraph(
             f"<b>{cancha['nombre']}</b> - {local_name} (Fútbol {cancha['cantidad']})",
             cancha_title_style
@@ -572,10 +572,10 @@ def generate_daily_schedule_pdf(date_cr, canchas, reservations_by_cancha, pagos_
             reservations = reservations_by_cancha.get(cancha['id'], [])
             add_cancha_section(cancha, reservations)
     
-    # Add Guadalupe section
+    # Add El Carmen de Guadalupe section
     if canchas_guadalupe:
         elements.append(Spacer(1, 20))
-        elements.append(Paragraph("<b>📍 LOCAL: GUADALUPE</b>", ParagraphStyle(
+        elements.append(Paragraph("<b>📍 LOCAL: EL CARMEN DE GUADALUPE</b>", ParagraphStyle(
             'LocalTitle',
             parent=styles['Heading2'],
             fontSize=16,
@@ -1220,7 +1220,7 @@ def send_whatsapp_reminders(request):
 
             cantidad = cancha.get('cantidad', '5')
             cancha_display = f"{cancha['nombre']} (Fut {cantidad})"
-            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'El Carmen de Guadalupe'
 
             print(f"[WhatsApp Reminders] Processing reserva {reserva['id']}:")
             print(f"  Nombre:  {reserva['nombre_reserva']}")
@@ -1384,7 +1384,7 @@ def send_reservation_info(request):
 
             cantidad = cancha.get('cantidad', '5')
             cancha_display = f"{cancha['nombre']} (Fut {cantidad})"
-            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'Guadalupe'
+            local_nombre = 'La Sabana' if cancha['local'] == 1 else 'El Carmen de Guadalupe'
 
             print(f"[Reservation Info] Processing reserva {reserva['id']}:")
             print(f"  Nombre:     {reserva['nombre_reserva']}")
