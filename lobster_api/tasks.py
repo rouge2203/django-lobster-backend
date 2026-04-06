@@ -1143,7 +1143,8 @@ def send_whatsapp_reminders(request):
     """
     Cron task: Send WhatsApp template reminders for reservations.
     TEST MODE — only processes reservas where nombre_reserva == 'Prueba'.
-    Intended to run every 12 hours.
+    Runs every hour; only sends between 9 AM and 8 PM Costa Rica time.
+    Looks ahead 36 hours.
     """
     auth_header = request.headers.get('Authorization', '')
     expected_secret = f"Bearer {settings.CRON_SECRET}"
@@ -1157,8 +1158,17 @@ def send_whatsapp_reminders(request):
         now_utc = datetime.now(timezone.utc)
         now_cr = now_utc.astimezone(COSTA_RICA_TZ)
 
+        if now_cr.hour < 9 or now_cr.hour > 20:
+            print(f"[WhatsApp Reminders] Outside sending hours ({now_cr.strftime('%I:%M %p')} CR), skipping")
+            return JsonResponse({
+                'success': True,
+                'message': f'Outside sending hours (9 AM – 8 PM CR), current: {now_cr.strftime("%I:%M %p")}',
+                'sent': 0,
+                'failed': 0,
+            })
+
         window_start = now_cr.strftime('%Y-%m-%d %H:%M:%S')
-        window_end = (now_cr + timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
+        window_end = (now_cr + timedelta(hours=36)).strftime('%Y-%m-%d %H:%M:%S')
 
         print(f"[WhatsApp Reminders] Current time (CR): {window_start}")
         print(f"[WhatsApp Reminders] Window: {window_start} → {window_end}")

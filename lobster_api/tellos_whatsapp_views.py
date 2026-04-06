@@ -120,7 +120,7 @@ def handle_button_tap(phone, msg):
         else:
             body = (
                 "¡Reservación confirmada! ✅\n\n"
-                "*Recuerde hacer un adelanto del 50% del valor de la cancha y subir su comprobante "
+                "*Recuerde hacer un adelanto del 50% del valor de la cancha con su nombre como detalle y subir el comprobante en el link de abajo."
                 "o su reservación podría ser cancelada.* ‼️\n\n"
                 "Les esperamos 👋🏻"
             )
@@ -142,7 +142,7 @@ def handle_button_tap(phone, msg):
             body,
             [
                 {"id": "CONFIRM_CANCEL", "title": "Sí, cancelar"},
-                {"id": "CONFIRM_RESERVA", "title": "Confirmar reservación"},
+                {"id": "CONFIRM_RESERVA", "title": "Confirmar reserva"},
             ],
         )
 
@@ -197,7 +197,7 @@ def handle_interactive_tap(phone, msg):
         else:
             body = (
                 "¡Reservación confirmada! ✅\n\n"
-                "*Recuerde hacer un adelanto del 50% del valor de la cancha y subir su comprobante "
+                "*Recuerde hacer un adelanto del 50% del valor de la cancha con su nombre como detalle y subir el comprobante en el link de abajo."
                 "o su reservación podría ser cancelada.* ‼️\n\n"
                 "Les esperamos 👋🏻"
             )
