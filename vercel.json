@@ -33,7 +33,7 @@
     },
     {
       "path": "/api/tasks/send-reservation-info",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/10 * * * *"
     }
   ]
 }

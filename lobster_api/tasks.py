@@ -1213,7 +1213,8 @@ def send_whatsapp_reminders(request):
             except ValueError:
                 inicio_dt = datetime.fromisoformat(hora_inicio.replace('Z', '+00:00'))
 
-            fecha = f"{inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
+            dia_semana = DIAS_ESPANOL[inicio_dt.weekday()]
+            fecha = f"{dia_semana} {inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
             hora_str = inicio_dt.strftime('%I:%M').lstrip('0')
             periodo = 'A.M.' if inicio_dt.hour < 12 else 'P.M.'
             hora = f"{hora_str} {periodo}"
@@ -1377,7 +1378,8 @@ def send_reservation_info(request):
             except ValueError:
                 inicio_dt = datetime.fromisoformat(hora_inicio.replace('Z', '+00:00'))
 
-            fecha = f"{inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
+            dia_semana = DIAS_ESPANOL[inicio_dt.weekday()]
+            fecha = f"{dia_semana} {inicio_dt.day} de {MESES_ESPANOL[inicio_dt.month]}"
             hora_str = inicio_dt.strftime('%I:%M').lstrip('0')
             periodo = 'A.M.' if inicio_dt.hour < 12 else 'P.M.'
             hora = f"{hora_str} {periodo}"
