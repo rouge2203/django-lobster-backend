@@ -1341,6 +1341,7 @@ def send_reservation_info(request):
 
         response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
             .eq('nombre_reserva', 'Prueba') \
+            .is_('info_whatsapp_enviado', 'null') \
             .not_.is_('celular_reserva', 'null') \
             .gte('created_at', window_start) \
             .execute()
@@ -1425,6 +1426,9 @@ def send_reservation_info(request):
 
                 if resp.status_code == 200:
                     sent += 1
+                    supabase.table('reservas').update({
+                        'info_whatsapp_enviado': True
+                    }).eq('id', reserva['id']).execute()
                     msg_id = resp_body.get('messages', [{}])[0].get('id', 'N/A')
                     print(f"[Reservation Info] SENT → {phone} (reserva {reserva['id']}, wa_msg_id: {msg_id})")
                     results.append({
