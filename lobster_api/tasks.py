@@ -1142,7 +1142,6 @@ def generate_recurring_reservations(request):
 def send_whatsapp_reminders(request):
     """
     Cron task: Send WhatsApp template reminders for reservations.
-    TEST MODE — only processes reservas where nombre_reserva == 'Prueba'.
     Runs every hour; only sends between 9 AM and 8 PM Costa Rica time.
     Looks ahead 36 hours.
     """
@@ -1174,7 +1173,6 @@ def send_whatsapp_reminders(request):
         print(f"[WhatsApp Reminders] Window: {window_start} → {window_end}")
 
         response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
-            .eq('nombre_reserva', 'Prueba') \
             .is_('whatsapp_enviado', 'null') \
             .not_.is_('celular_reserva', 'null') \
             .gte('hora_inicio', window_start) \
@@ -1187,7 +1185,7 @@ def send_whatsapp_reminders(request):
         if not reservations:
             return JsonResponse({
                 'success': True,
-                'message': 'No test reservations need WhatsApp reminders',
+                'message': 'No reservations need WhatsApp reminders',
                 'sent': 0,
                 'failed': 0,
             })
@@ -1321,7 +1319,6 @@ def send_whatsapp_reminders(request):
 def send_reservation_info(request):
     """
     Cron task: Send WhatsApp reservation_info template for newly created reservations.
-    TEST MODE — only processes reservas where nombre_reserva == 'Prueba'.
     Checks reservas created in the last 10 minutes.
     """
     auth_header = request.headers.get('Authorization', '')
@@ -1340,7 +1337,6 @@ def send_reservation_info(request):
         print(f"[Reservation Info] Window: created_at >= {window_start}")
 
         response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
-            .eq('nombre_reserva', 'Prueba') \
             .is_('info_whatsapp_enviado', 'null') \
             .not_.is_('celular_reserva', 'null') \
             .gte('created_at', window_start) \
@@ -1352,7 +1348,7 @@ def send_reservation_info(request):
         if not reservations:
             return JsonResponse({
                 'success': True,
-                'message': 'No new test reservations to notify',
+                'message': 'No new reservations to notify',
                 'sent': 0,
                 'failed': 0,
             })
