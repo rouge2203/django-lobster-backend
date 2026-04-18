@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .supabase_client import get_supabase_client
+from .tellos_views import send_cancellation_admin_notification
 from .whatsapp_utils import (
     normalize_phone,
     send_whatsapp_text,
@@ -27,8 +28,10 @@ MESES_ESPANOL = {
 
 def find_reservation_by_phone(phone):
     """
-    Find the upcoming reservation whose WhatsApp reminder was already sent
-    and whose celular_reserva matches the incoming phone (after normalization).
+    Legacy fallback: find the soonest pending upcoming reservation whose WhatsApp
+    reminder was already sent and whose celular_reserva matches the incoming phone
+    (after normalization). Only used when the incoming button payload does not
+    carry an explicit reserva id (i.e. messages sent before the payload-based flow).
     Returns (reserva_dict, cancha_dict) or (None, None).
     """
     supabase = get_supabase_client()
@@ -38,6 +41,7 @@ def find_reservation_by_phone(phone):
 
     response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
         .eq('whatsapp_enviado', True) \
+        .is_('whatsapp_confirmada', 'null') \
         .not_.is_('celular_reserva', 'null') \
         .gte('hora_inicio', now_str) \
         .order('hora_inicio') \
@@ -49,6 +53,26 @@ def find_reservation_by_phone(phone):
             return reserva, cancha
 
     return None, None
+
+
+def find_reservation_by_id(reserva_id):
+    """
+    Look up a reservation by its UUID, joining cancha info.
+    Returns (reserva_dict, cancha_dict) or (None, None).
+    """
+    supabase = get_supabase_client()
+
+    response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
+        .eq('id', reserva_id) \
+        .limit(1) \
+        .execute()
+
+    if not response.data:
+        return None, None
+
+    reserva = response.data[0]
+    cancha = reserva.pop('canchas', None)
+    return reserva, cancha
 
 
 def format_reserva_details(reserva, cancha):
@@ -81,10 +105,37 @@ def has_payment(reserva):
 # ---------------------------------------------------------------------------
 
 def handle_button_tap(phone, msg):
-    """Handle template quick-reply buttons: Confirmar / Cancelar."""
-    button_text = msg["button"]["text"]
+    """Handle template quick-reply buttons: Confirmar / Cancelar.
 
-    reserva, cancha = find_reservation_by_phone(phone)
+    New messages carry payloads like CONFIRM_REMINDER_<uuid> / CANCEL_REMINDER_<uuid>
+    so we can act on the exact reserva. Legacy messages (sent before the payload
+    flow) only carry the button text; in that case we fall back to the soonest
+    pending reserva for this phone.
+    """
+    button_text = msg["button"]["text"]
+    button_payload = msg["button"].get("payload", "") or ""
+
+    intent = None
+    reserva = None
+    cancha = None
+
+    if button_payload.startswith("CONFIRM_REMINDER_"):
+        intent = "confirm"
+        reserva_id = button_payload[len("CONFIRM_REMINDER_"):]
+        reserva, cancha = find_reservation_by_id(reserva_id)
+    elif button_payload.startswith("CANCEL_REMINDER_"):
+        intent = "cancel"
+        reserva_id = button_payload[len("CANCEL_REMINDER_"):]
+        reserva, cancha = find_reservation_by_id(reserva_id)
+    else:
+        if button_text == "Confirmar":
+            intent = "confirm"
+        elif button_text == "Cancelar":
+            intent = "cancel"
+        reserva, cancha = find_reservation_by_phone(phone)
+
+    if intent is None:
+        return
 
     if not reserva:
         send_whatsapp_text(
@@ -103,20 +154,20 @@ def handle_button_tap(phone, msg):
 
     supabase = get_supabase_client()
 
-    if button_text == "Confirmar":
+    if intent == "confirm":
         supabase.table('reservas').update({
             'whatsapp_confirmada': True
         }).eq('id', reserva['id']).execute()
 
         reserva_url = f"https://futboltello.com/reserva/{reserva['id']}"
-        
+
         if has_payment(reserva):
             body = (
                 "¡Reservación confirmada! ✅\n\n"
                 f"Puede ver detalles de su reservación y cómo llegar a nuestras instalaciones al clic en el botón de abajo.\n\n"
                 "Les esperamos 👋🏻"
             )
-            button_text = "Ver reservación"
+            cta_button_text = "Ver reservación"
         else:
             body = (
                 "¡Reservación confirmada! ✅\n\n"
@@ -124,10 +175,10 @@ def handle_button_tap(phone, msg):
                 "o su reservación podría ser cancelada.* ‼️\n\n"
                 "Les esperamos 👋🏻"
             )
-            button_text = "Subir comprobante"
-        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", button_text, reserva_url)
+            cta_button_text = "Subir comprobante"
+        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", cta_button_text, reserva_url)
 
-    elif button_text == "Cancelar":
+    elif intent == "cancel":
         fecha, hora, cancha_name, local_nombre = format_reserva_details(reserva, cancha)
 
         body = (
@@ -141,17 +192,43 @@ def handle_button_tap(phone, msg):
             phone,
             body,
             [
-                {"id": "CONFIRM_CANCEL", "title": "Sí, cancelar"},
-                {"id": "CONFIRM_RESERVA", "title": "Confirmar reserva"},
+                {"id": f"CONFIRM_CANCEL_{reserva['id']}", "title": "Sí, cancelar"},
+                {"id": f"CONFIRM_RESERVA_{reserva['id']}", "title": "Confirmar reserva"},
             ],
         )
 
 
 def handle_interactive_tap(phone, msg):
-    """Handle interactive button taps: Sí cancelar / Confirmar reserva."""
+    """Handle interactive button taps: Sí cancelar / Confirmar reserva.
+
+    New ids look like CONFIRM_CANCEL_<uuid> / CONFIRM_RESERVA_<uuid> so we can
+    act on the exact reserva. Plain CONFIRM_CANCEL / CONFIRM_RESERVA ids come
+    from messages sent before the id-based flow and fall back to the soonest
+    pending reserva for this phone.
+    """
     button_id = msg["interactive"]["button_reply"]["id"]
 
-    reserva, cancha = find_reservation_by_phone(phone)
+    intent = None
+    reserva = None
+    cancha = None
+
+    if button_id.startswith("CONFIRM_CANCEL_"):
+        intent = "cancel"
+        reserva_id = button_id[len("CONFIRM_CANCEL_"):]
+        reserva, cancha = find_reservation_by_id(reserva_id)
+    elif button_id.startswith("CONFIRM_RESERVA_"):
+        intent = "confirm"
+        reserva_id = button_id[len("CONFIRM_RESERVA_"):]
+        reserva, cancha = find_reservation_by_id(reserva_id)
+    elif button_id == "CONFIRM_CANCEL":
+        intent = "cancel"
+        reserva, cancha = find_reservation_by_phone(phone)
+    elif button_id == "CONFIRM_RESERVA":
+        intent = "confirm"
+        reserva, cancha = find_reservation_by_phone(phone)
+
+    if intent is None:
+        return
 
     if not reserva:
         send_whatsapp_text(
@@ -171,8 +248,17 @@ def handle_interactive_tap(phone, msg):
 
     supabase = get_supabase_client()
 
-    if button_id == "CONFIRM_CANCEL":
+    if intent == "cancel":
         supabase.table('reservas').delete().eq('id', reserva['id']).execute()
+
+        # Notify admins by email that the client cancelled via WhatsApp.
+        # We do this AFTER the delete succeeds so we don't email about a slot
+        # that wasn't actually freed. Email failures are swallowed inside the
+        # helper so they never break the WhatsApp UX.
+        try:
+            send_cancellation_admin_notification(reserva, cancha, cancelled_by='whatsapp')
+        except Exception as e:
+            print(f"[WhatsApp Webhook] Failed to send cancellation admin email: {e}")
 
         send_whatsapp_text(
             phone,
@@ -180,20 +266,19 @@ def handle_interactive_tap(phone, msg):
             "Puede hacer una nueva reservación cuando guste en: futboltello.com ⚽️"
         )
 
-    elif button_id == "CONFIRM_RESERVA":
+    elif intent == "confirm":
         supabase.table('reservas').update({
             'whatsapp_confirmada': True
         }).eq('id', reserva['id']).execute()
 
-        reserva_url = f"https://futboltello.com/reservas/{reserva['id']}"
-        button_text = "Ver reservación"
+        reserva_url = f"https://futboltello.com/reserva/{reserva['id']}"
         if has_payment(reserva):
             body = (
                 "¡Reservación confirmada! ✅\n\n"
                 f"Puede ver detalles de su reservación y cómo llegar a nuestras instalaciones al clic en el botón de abajo. \n\n"
                 "Les esperamos 👋🏻"
             )
-            button_text = "Ver reservación"
+            cta_button_text = "Ver reservación"
         else:
             body = (
                 "¡Reservación confirmada! ✅\n\n"
@@ -201,8 +286,8 @@ def handle_interactive_tap(phone, msg):
                 "o su reservación podría ser cancelada.* ‼️\n\n"
                 "Les esperamos 👋🏻"
             )
-            button_text = "Subir comprobante"
-        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", button_text, reserva_url)
+            cta_button_text = "Subir comprobante"
+        send_whatsapp_cta_url(phone, body, "Un abrazo de gol", cta_button_text, reserva_url)
 
 
 # ---------------------------------------------------------------------------

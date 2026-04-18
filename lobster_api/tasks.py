@@ -1240,6 +1240,22 @@ def send_whatsapp_reminders(request):
                         {"type": "text", "text": local_nombre},
                     ],
                 },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "0",
+                    "parameters": [
+                        {"type": "payload", "payload": f"CONFIRM_REMINDER_{reserva['id']}"},
+                    ],
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "1",
+                    "parameters": [
+                        {"type": "payload", "payload": f"CANCEL_REMINDER_{reserva['id']}"},
+                    ],
+                },
             ]
 
             try:
@@ -1338,6 +1354,7 @@ def send_reservation_info(request):
 
         response = supabase.table('reservas').select('*, canchas(nombre, local, cantidad)') \
             .is_('info_whatsapp_enviado', 'null') \
+            .is_('reservacion_fija_id', 'null') \
             .not_.is_('celular_reserva', 'null') \
             .gte('created_at', window_start) \
             .execute()

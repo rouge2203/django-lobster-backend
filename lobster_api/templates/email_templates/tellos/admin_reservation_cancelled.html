@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nueva Reservación - Futbol Tello</title>
+    <title>Reservación Cancelada - Futbol Tello</title>
   </head>
   <body
     style="
@@ -35,7 +35,7 @@
               overflow: hidden;
             "
           >
-            <!-- Header with Logo and Branding -->
+            <!-- Header -->
             <tr>
               <td
                 style="
@@ -81,11 +81,11 @@
             <!-- Main Content -->
             <tr>
               <td style="padding: 32px 24px">
-                <!-- Alert Badge -->
+                <!-- Cancellation Alert Badge -->
                 <div
                   style="
-                    background: rgba(26, 92, 58, 0.15);
-                    border: 1px solid rgba(26, 92, 58, 0.4);
+                    background: rgba(220, 38, 38, 0.15);
+                    border: 1px solid rgba(220, 38, 38, 0.45);
                     border-radius: 8px;
                     padding: 12px 16px;
                     margin-bottom: 16px;
@@ -100,12 +100,11 @@
                       font-weight: 600;
                     "
                   >
-                    🔔 Nueva reservación recibida
+                    ❌ Reservación cancelada
                   </p>
                 </div>
 
-                {% if source_label %}
-                <!-- Origin Badge -->
+                <!-- Cancellation Source Block -->
                 <div
                   style="
                     background: rgba(255, 255, 255, 0.05);
@@ -124,7 +123,7 @@
                       letter-spacing: 0.5px;
                     "
                   >
-                    Origen
+                    Cancelada por
                   </p>
                   <p
                     style="
@@ -134,9 +133,9 @@
                       font-weight: 600;
                     "
                   >
-                    {{ source_label }}
+                    {{ cancelled_by_label }}
                   </p>
-                  {% if created_by_name %}
+                  {% if cancelled_at %}
                   <p
                     style="
                       margin: 8px 0 0 0;
@@ -144,11 +143,10 @@
                       font-size: 13px;
                     "
                   >
-                    Creada por <strong style="color: #ffffff;">{{ created_by_name }}</strong>{% if created_by_email %} ({{ created_by_email }}){% endif %}
+                    {{ cancelled_at }} (Costa Rica)
                   </p>
                   {% endif %}
                 </div>
-                {% endif %}
 
                 <h2
                   style="
@@ -158,7 +156,7 @@
                     font-weight: 700;
                   "
                 >
-                  Nueva Reservación
+                  Reservación cancelada
                 </h2>
                 <p
                   style="
@@ -168,14 +166,14 @@
                     line-height: 1.5;
                   "
                 >
-                  Se ha registrado una nueva reservación en el sistema.
+                  El siguiente espacio quedó liberado y ya no está reservado en el sistema.
                 </p>
 
                 <!-- Client Info Card -->
                 <div
                   style="
-                    background: rgba(26, 92, 58, 0.08);
-                    border: 1px solid rgba(26, 92, 58, 0.25);
+                    background: rgba(220, 38, 38, 0.06);
+                    border: 1px solid rgba(220, 38, 38, 0.25);
                     border-radius: 12px;
                     padding: 20px;
                     margin-bottom: 20px;
@@ -184,7 +182,7 @@
                   <h3
                     style="
                       margin: 0 0 16px 0;
-                      color: #3d8b5a;
+                      color: #ef4444;
                       font-size: 14px;
                       font-weight: 600;
                       text-transform: uppercase;
@@ -286,7 +284,7 @@
                       letter-spacing: 0.5px;
                     "
                   >
-                    ⚽ Detalles de la Reservación
+                    ⚽ Detalles del espacio liberado
                   </h3>
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
@@ -385,35 +383,6 @@
                             font-size: 12px;
                           "
                         >
-                          Jugadores
-                        </p>
-                        <p
-                          style="
-                            margin: 0;
-                            color: #ffffff;
-                            font-size: 16px;
-                            font-weight: 600;
-                          "
-                        >
-                          {{ jugadores }}
-                        </p>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        style="
-                          padding-bottom: 12px;
-                          border-top: 1px solid rgba(255, 255, 255, 0.1);
-                          padding-top: 12px;
-                        "
-                      >
-                        <p
-                          style="
-                            margin: 0 0 4px 0;
-                            color: rgba(255, 255, 255, 0.6);
-                            font-size: 12px;
-                          "
-                        >
                           Árbitro
                         </p>
                         <p
@@ -442,12 +411,12 @@
                             font-size: 12px;
                           "
                         >
-                          Total
+                          Total que se había reservado
                         </p>
                         <p
                           style="
                             margin: 0;
-                            color: #3d8b5a;
+                            color: #ef4444;
                             font-size: 24px;
                             font-weight: 700;
                           "
@@ -459,66 +428,6 @@
                   </table>
                 </div>
 
-                <!-- Payment Status -->
-                <div
-                  style="
-                    background: rgba(234, 179, 8, 0.1);
-                    border: 1px solid rgba(234, 179, 8, 0.3);
-                    border-radius: 12px;
-                    padding: 16px;
-                    margin-bottom: 20px;
-                  "
-                >
-                  <p
-                    style="
-                      margin: 0;
-                      color: #eab308;
-                      font-size: 14px;
-                      font-weight: 600;
-                    "
-                  >
-                    ⏳ Pendiente de adelanto
-                  </p>
-                  <p
-                    style="
-                      margin: 8px 0 0 0;
-                      color: rgba(255, 255, 255, 0.7);
-                      font-size: 13px;
-                    "
-                  >
-                    El cliente tiene 2 horas para realizar el adelanto y subir el comprobante.
-                  </p>
-                </div>
-
-                <!-- View Reservation Button -->
-                <table
-                  width="100%"
-                  cellpadding="0"
-                  cellspacing="0"
-                  style="margin-bottom: 20px"
-                >
-                  <tr>
-                    <td align="center">
-                      <a
-                        href="{{ reserva_url }}"
-                        style="
-                          display: inline-block;
-                          background: #2a2a2d;
-                          border: 1px solid #3a3a3d;
-                          color: #ffffff;
-                          text-decoration: none;
-                          padding: 18px 36px;
-                          border-radius: 8px;
-                          font-weight: 800;
-                          font-size: 16px;
-                        "
-                      >
-                        Ver reservación completa
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-
                 <!-- Footer -->
                 <p
                   style="
@@ -528,7 +437,7 @@
                     text-align: center;
                   "
                 >
-                  ID de reservación:
+                  ID de reservación cancelada:
                   <span
                     style="
                       color: rgba(255, 255, 255, 0.7);
