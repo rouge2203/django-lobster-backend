@@ -1,6 +1,9 @@
 import re
 import requests
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
+META_HOST = "graph.facebook.com"
 
 
 def normalize_phone(raw):
@@ -15,12 +18,32 @@ def normalize_phone(raw):
 
 
 def _get_api_url():
-    return f"https://graph.facebook.com/v22.0/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
+    return (
+        f"{settings.WHATSAPP_API_BASE_URL}/{settings.WHATSAPP_API_VERSION}"
+        f"/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
+    )
 
 
 def _get_headers():
+    """
+    Build the auth headers, refusing to send a Meta-issued credential anywhere
+    but Meta. A token starting with EAA is only valid at graph.facebook.com, so
+    if the base URL points at a relay the credential must be that relay's own
+    key (Dualhook issues dh_live_...). Failing here is deliberate: the request
+    would be rejected downstream anyway, and this way the token never leaves us.
+    """
+    token = settings.WHATSAPP_ACCESS_TOKEN
+    base_url = settings.WHATSAPP_API_BASE_URL
+
+    if token.startswith("EAA") and META_HOST not in base_url:
+        raise ImproperlyConfigured(
+            f"WHATSAPP_ACCESS_TOKEN is a Meta token but WHATSAPP_API_BASE_URL is "
+            f"'{base_url}'. Set the relay's own key (dh_live_...) before moving the "
+            f"host, or point WHATSAPP_API_BASE_URL back at https://{META_HOST}."
+        )
+
     return {
-        "Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 

@@ -177,7 +177,16 @@ SUPABASE_KEY = env('SUPABASE_KEY')
 # Cron job security
 CRON_SECRET = env('CRON_SECRET', default='')
 
-# WhatsApp Cloud API (Meta Graph API v22.0)
+# WhatsApp Cloud API (Graph-compatible)
+# Defaults talk to Meta directly. To route outbound calls through Dualhook's
+# signing relay, change only these two values in the environment:
+#   WHATSAPP_API_BASE_URL=https://api.dualhook.com
+#   WHATSAPP_ACCESS_TOKEN=dh_live_...
+# Rolling back is the reverse: restore the Meta host and the EAA... token.
+WHATSAPP_API_BASE_URL = env('WHATSAPP_API_BASE_URL', default='https://graph.facebook.com').rstrip('/')
+WHATSAPP_API_VERSION = env('WHATSAPP_API_VERSION', default='v25.0')
 WHATSAPP_PHONE_NUMBER_ID = env('WHATSAPP_PHONE_NUMBER_ID', default='')
 WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')
+
+# Verify token for the inbound webhook handshake (unchanged by the host cutover)
 DUALHOOK_TOKEN = env('DUALHOOK_TOKEN', default='')
