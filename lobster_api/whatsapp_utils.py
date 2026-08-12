@@ -17,9 +17,33 @@ def normalize_phone(raw):
     return digits
 
 
+_route_logged = False
+
+
 def _get_api_url():
+    # Announce the resolved host once per process. Sending works against both
+    # Meta and the relay, so the logs are the only way to tell them apart.
+    global _route_logged
+    base_url = settings.WHATSAPP_API_BASE_URL
+
+    # An env var that exists but is blank does NOT fall back to the default:
+    # django-environ only uses the default when the key is absent entirely. A
+    # blank value would otherwise build a schemeless URL and surface as an
+    # opaque requests.MissingSchema deep inside the send.
+    if not base_url.startswith(("http://", "https://")):
+        raise ImproperlyConfigured(
+            f"WHATSAPP_API_BASE_URL is '{base_url}', which is not a full URL. Set it to "
+            f"https://api.dualhook.com (relay) or https://{META_HOST} (direct). Note that "
+            f"leaving it blank is not the same as leaving it unset."
+        )
+
+    if not _route_logged:
+        route = "META DIRECT" if META_HOST in base_url else "DUALHOOK RELAY"
+        print(f"[WhatsApp] Outbound route: {route} → {base_url}/{settings.WHATSAPP_API_VERSION}")
+        _route_logged = True
+
     return (
-        f"{settings.WHATSAPP_API_BASE_URL}/{settings.WHATSAPP_API_VERSION}"
+        f"{base_url}/{settings.WHATSAPP_API_VERSION}"
         f"/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
     )
 
